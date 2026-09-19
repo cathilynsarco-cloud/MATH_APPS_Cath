@@ -246,26 +246,15 @@
                 
                 <!-- Universal Thumbnail Photo Option (KB optimized) -->
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">🖼️ Thumbnail Photo (Optional KB-optimized)</label>
-                    <input type="file" id="input-thumb-file" accept="image/*" onchange="compressImage(event, 'input-thumb-base64', 400)" class="w-full text-xs text-slate-500">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">🖼️ Thumbnail Photo (Optional)</label>
+                    <input type="file" id="input-thumb-file" accept="image/*" onchange="compressImage(event, 'input-thumb-base64', 300)" class="w-full text-xs text-slate-500">
                     <input type="hidden" id="input-thumb-base64">
                 </div>
                 
                 <div id="field-container-note" class="content-field-group space-y-2">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Full Notes & Examples</label>
-                        <textarea id="input-content-body" rows="4" placeholder="Write comprehensive notes, ideas, steps, and examples here..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Upload File / PDF Document</label>
-                        <input type="file" id="input-material-file" accept=".pdf,image/*,.html,.htm,.doc,.docx" onchange="handleMaterialFileUpload(event)" class="w-full text-xs text-slate-500">
-                        <input type="hidden" id="input-material-file-data">
-                        <input type="hidden" id="input-material-file-type">
-                        <input type="hidden" id="input-material-file-name">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Custom HTML / Embed</label>
-                        <textarea id="input-custom-html" rows="1" placeholder="&lt;iframe...&gt;" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono"></textarea>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Notes, Steps & Google Doc/Sheet Links</label>
+                        <textarea id="input-content-body" rows="4" placeholder="Write comprehensive notes, examples, or paste your Google Docs / Sheets links here..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm"></textarea>
                     </div>
                 </div>
 
@@ -282,12 +271,12 @@
 
                 <div id="field-container-link" class="content-field-group hidden space-y-2">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">URL</label>
-                        <input type="url" id="input-content-url" placeholder="https://..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Google Doc / Sheet / External URL</label>
+                        <input type="url" id="input-content-url" placeholder="https://docs.google.com/..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Description</label>
-                        <textarea id="input-link-desc" rows="2" placeholder="Description..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm"></textarea>
+                        <textarea id="input-link-desc" rows="2" placeholder="Instructions or description for students..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm"></textarea>
                     </div>
                 </div>
 
@@ -340,7 +329,6 @@
             switchMode('student');
         };
 
-        // Realtime updates across devices
         function setupRealtimeSubscriptions() {
             if (!isSupabaseConnected || !supabaseClient) return;
 
@@ -355,17 +343,7 @@
                             loadContentsForGrade(activeGradeId);
                         }
                     })
-                    .subscribe((status) => {
-                        const indicator = document.getElementById('sync-status-indicator');
-                        const text = document.getElementById('sync-status-text');
-                        if (status === 'SUBSCRIBED') {
-                            indicator.className = "text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-medium flex items-center gap-1";
-                            text.textContent = "Live Synced";
-                        } else {
-                            indicator.className = "text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full font-medium flex items-center gap-1";
-                            text.textContent = "Syncing...";
-                        }
-                    });
+                    .subscribe();
             } catch (e) {
                 console.log("Realtime not configured:", e);
             }
@@ -420,7 +398,7 @@
                     if (!error && data) remoteGrades = data;
                 } catch (e) {}
             }
-            const savedGrades = localStorage.getItem('math_grades_v3');
+            const savedGrades = localStorage.getItem('math_grades_v4');
             const localGrades = savedGrades ? JSON.parse(savedGrades) : [];
             
             const mergedMap = new Map();
@@ -428,7 +406,7 @@
             remoteGrades.forEach(g => mergedMap.set(g.id, g));
             grades = Array.from(mergedMap.values());
             
-            localStorage.setItem('math_grades_v3', JSON.stringify(grades));
+            safeLocalStorageSet('math_grades_v4', JSON.stringify(grades));
             renderDashboardGrades();
         }
 
@@ -440,7 +418,7 @@
                     if (!error && data) remoteContents = data;
                 } catch (e) {}
             }
-            const savedContents = localStorage.getItem('math_contents_v3_' + gradeId);
+            const savedContents = localStorage.getItem('math_contents_v4_' + gradeId);
             const localContents = savedContents ? JSON.parse(savedContents) : [];
 
             const mergedMap = new Map();
@@ -448,13 +426,23 @@
             remoteContents.forEach(c => mergedMap.set(c.id, c));
             contents = Array.from(mergedMap.values());
 
-            localStorage.setItem('math_contents_v3_' + gradeId, JSON.stringify(contents));
+            safeLocalStorageSet('math_contents_v4_' + gradeId, JSON.stringify(contents));
             renderContents();
+        }
+
+        // Safe LocalStorage wrapper to catch QuotaExceeded errors
+        function safeLocalStorageSet(key, value) {
+            try {
+                localStorage.setItem(key, value);
+            } catch (e) {
+                console.error("LocalStorage full or disabled:", e);
+                alert("⚠️ Storage Warning: Your browser local storage is full. Please use Supabase online backup.");
+            }
         }
 
         function checkForUnsyncedLocalData() {
             if (!isSupabaseConnected || !supabaseClient) return;
-            const savedGrades = localStorage.getItem('math_grades_v3');
+            const savedGrades = localStorage.getItem('math_grades_v4');
             if (savedGrades && JSON.parse(savedGrades).length > 0) {
                 document.getElementById('sync-backup-btn').classList.remove('hidden');
             }
@@ -465,7 +453,7 @@
             const btn = document.getElementById('sync-backup-btn');
             btn.textContent = "⏳ Uploading...";
             try {
-                const savedGrades = localStorage.getItem('math_grades_v3');
+                const savedGrades = localStorage.getItem('math_grades_v4');
                 if (savedGrades) {
                     for (const g of JSON.parse(savedGrades)) {
                         await supabaseClient.from('grades').upsert(g, { onConflict: 'id' });
@@ -473,7 +461,7 @@
                 }
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
-                    if (key && key.startsWith('math_contents_v3_')) {
+                    if (key && key.startsWith('math_contents_v4_')) {
                         for (const c of JSON.parse(localStorage.getItem(key) || '[]')) {
                             await supabaseClient.from('contents').upsert(c, { onConflict: 'id' });
                         }
@@ -545,7 +533,6 @@
             renderDashboardGrades();
         }
 
-        // Renders note/reminder/link with distinct header/icon/badge colors per category (white cards background)
         function renderContents() {
             const container = document.getElementById('content-container');
             if (!activeGradeId) return;
@@ -577,7 +564,7 @@
                         }
 
                         let oneLineSnippet = '';
-                        if (item.type === 'note') oneLineSnippet = item.body || (item.fileData ? 'Attached File' : 'Tap to read full notes...');
+                        if (item.type === 'note') oneLineSnippet = item.body || 'Tap to read full notes...';
                         if (item.type === 'reminder') oneLineSnippet = 'Due: ' + (item.dueDate ? new Date(item.dueDate).toLocaleString() : 'N/A');
                         if (item.type === 'link') oneLineSnippet = item.description || item.url;
 
@@ -607,14 +594,12 @@
             `;
         }
 
-        // Full Viewer modal where students can scroll down to read everything
         function openDetailView(id) {
             const item = contents.find(c => c.id === id);
             if (!item) return;
 
             document.getElementById('detail-modal-title').textContent = item.title;
             
-            // Apply category header color in detail modal header
             const headerBar = document.getElementById('detail-modal-header-bar');
             if (item.type === 'reminder') {
                 headerBar.className = "bg-emerald-600 text-white p-4 flex justify-between items-center flex-shrink-0";
@@ -632,19 +617,6 @@
                     <div class="space-y-3">
                         ${item.thumbnail ? `<img src="${item.thumbnail}" class="w-full h-48 object-cover rounded-xl border border-slate-100">` : ''}
                         ${item.body ? `<div class="bg-amber-50/50 p-3 rounded-xl border border-amber-100 text-slate-700 whitespace-pre-line text-sm leading-relaxed">${escapeHtml(item.body)}</div>` : ''}
-                        
-                        ${item.fileData ? `
-                            <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-amber-900">📄 Attached Learning File</span>
-                                    <a href="${item.fileData}" download="${escapeHtml(item.fileName || 'document')}" class="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg font-medium inline-flex items-center gap-1 shadow-sm">📥 Download File</a>
-                                </div>
-                                ${item.fileType && item.fileType.includes('image') ? `<img src="${item.fileData}" class="max-h-64 rounded-lg mx-auto">` : ''}
-                                ${item.fileType && item.fileType.includes('pdf') ? `<iframe src="${item.fileData}" class="w-full h-80 rounded border border-amber-200 bg-white"></iframe>` : ''}
-                            </div>
-                        ` : ''}
-
-                        ${item.customHtml ? `<div class="p-3 bg-slate-50 border border-slate-200 rounded-xl overflow-x-auto">${item.customHtml}</div>` : ''}
                     </div>
                 `;
             } else if (item.type === 'reminder') {
@@ -660,7 +632,7 @@
                     <div class="space-y-3">
                         ${item.thumbnail ? `<img src="${item.thumbnail}" class="w-full h-40 object-cover rounded-xl border border-slate-100">` : ''}
                         <p class="text-slate-600 text-sm">${escapeHtml(item.description || '')}</p>
-                        <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="bg-sky-600 text-white px-4 py-2.5 rounded-xl font-medium text-xs inline-flex items-center gap-1.5 shadow-sm">🌐 Open External Website ↗</a>
+                        <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="bg-sky-600 text-white px-4 py-2.5 rounded-xl font-medium text-xs inline-flex items-center gap-1.5 shadow-sm">🌐 Open Google Doc / Sheet ↗</a>
                     </div>
                 `;
             }
@@ -698,7 +670,7 @@
             const photoB64 = document.getElementById('edit-teacher-photo-base64').value;
             if (photoB64) grade.teacherPhoto = photoB64;
 
-            localStorage.setItem('math_grades_v3', JSON.stringify(grades));
+            safeLocalStorageSet('math_grades_v4', JSON.stringify(grades));
             if (isSupabaseConnected && supabaseClient) {
                 await supabaseClient.from('grades').upsert(grade, { onConflict: 'id' });
             }
@@ -731,7 +703,7 @@
                 document.getElementById('field-container-reminder').classList.remove('hidden'); 
             }
             else if (type === 'link') { 
-                titleEl.textContent = "Add Link"; 
+                titleEl.textContent = "Add Google Doc / Sheet Link"; 
                 modalHeader.className = "bg-sky-600 text-white p-4 flex justify-between items-center flex-shrink-0";
                 document.getElementById('field-container-link').classList.remove('hidden'); 
             }
@@ -739,10 +711,6 @@
             document.getElementById('input-content-title').value = '';
             document.getElementById('input-thumb-base64').value = '';
             document.getElementById('input-content-body').value = '';
-            document.getElementById('input-material-file-data').value = '';
-            document.getElementById('input-material-file-type').value = '';
-            document.getElementById('input-material-file-name').value = '';
-            document.getElementById('input-custom-html').value = '';
             document.getElementById('input-reminder-date').value = '';
             document.getElementById('input-reminder-body').value = '';
             document.getElementById('input-content-url').value = '';
@@ -759,10 +727,6 @@
 
             if (item.type === 'note') {
                 document.getElementById('input-content-body').value = item.body || '';
-                document.getElementById('input-material-file-data').value = item.fileData || '';
-                document.getElementById('input-material-file-type').value = item.fileType || '';
-                document.getElementById('input-material-file-name').value = item.fileName || '';
-                document.getElementById('input-custom-html').value = item.customHtml || '';
             } else if (item.type === 'reminder') {
                 document.getElementById('input-reminder-date').value = item.dueDate || '';
                 document.getElementById('input-reminder-body').value = item.body || '';
@@ -799,7 +763,7 @@
             };
 
             grades.push(newGrade);
-            localStorage.setItem('math_grades_v3', JSON.stringify(grades));
+            safeLocalStorageSet('math_grades_v4', JSON.stringify(grades));
 
             if (isSupabaseConnected && supabaseClient) {
                 await supabaseClient.from('grades').upsert(newGrade, { onConflict: 'id' });
@@ -816,7 +780,7 @@
                 await supabaseClient.from('grades').delete().eq('id', id);
             }
             grades = grades.filter(g => g.id !== id);
-            localStorage.setItem('math_grades_v3', JSON.stringify(grades));
+            safeLocalStorageSet('math_grades_v4', JSON.stringify(grades));
             deselectGrade();
         }
 
@@ -833,10 +797,6 @@
                 title: title,
                 thumbnail: document.getElementById('input-thumb-base64').value || (existingItem ? existingItem.thumbnail : ''),
                 body: currentContentType === 'note' ? document.getElementById('input-content-body').value : (currentContentType === 'reminder' ? document.getElementById('input-reminder-body').value : ''),
-                fileData: currentContentType === 'note' ? document.getElementById('input-material-file-data').value || (existingItem ? existingItem.fileData : '') : '',
-                fileType: currentContentType === 'note' ? document.getElementById('input-material-file-type').value || (existingItem ? existingItem.fileType : '') : '',
-                fileName: currentContentType === 'note' ? document.getElementById('input-material-file-name').value || (existingItem ? existingItem.fileName : '') : '',
-                customHtml: currentContentType === 'note' ? document.getElementById('input-custom-html').value : '',
                 dueDate: currentContentType === 'reminder' ? document.getElementById('input-reminder-date').value : '',
                 url: currentContentType === 'link' ? document.getElementById('input-content-url').value : '',
                 description: currentContentType === 'link' ? document.getElementById('input-link-desc').value : ''
@@ -845,7 +805,7 @@
             if (editId) contents = contents.map(c => c.id === editId ? updatedItem : c);
             else contents.push(updatedItem);
 
-            localStorage.setItem('math_contents_v3_' + activeGradeId, JSON.stringify(contents));
+            safeLocalStorageSet('math_contents_v4_' + activeGradeId, JSON.stringify(contents));
 
             if (isSupabaseConnected && supabaseClient) {
                 await supabaseClient.from('contents').upsert(updatedItem, { onConflict: 'id' });
@@ -861,12 +821,11 @@
                 await supabaseClient.from('contents').delete().eq('id', id);
             }
             contents = contents.filter(c => c.id !== id);
-            localStorage.setItem('math_contents_v3_' + activeGradeId, JSON.stringify(contents));
+            safeLocalStorageSet('math_contents_v4_' + activeGradeId, JSON.stringify(contents));
             renderContents();
         }
 
-        // Compresses uploaded images down to KB scale automatically
-        function compressImage(event, targetInputId, maxWidth = 400) {
+        function compressImage(event, targetInputId, maxWidth = 300) {
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
@@ -884,22 +843,10 @@
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.65);
                     document.getElementById(targetInputId).value = compressedBase64;
                 }
                 img.src = e.target.result;
-            }
-            reader.readAsDataURL(file);
-        }
-
-        function handleMaterialFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            document.getElementById('input-material-file-name').value = file.name;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('input-material-file-data').value = e.target.result;
-                document.getElementById('input-material-file-type').value = file.type;
             }
             reader.readAsDataURL(file);
         }
