@@ -66,6 +66,11 @@
             </div>
             
             <div class="flex items-center gap-1.5">
+                <!-- Backup / Restore Sync Button -->
+                <button onclick="syncLocalToSupabaseBackup()" id="sync-backup-btn" class="hidden text-[10px] bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded-lg font-bold shadow transition-all animate-pulse flex items-center gap-1">
+                    ⚠️ Restore Local Backup Online
+                </button>
+                
                 <!-- Mode Switcher -->
                 <div class="bg-indigo-900/40 p-0.5 rounded-lg flex items-center border border-indigo-400/30">
                     <button onclick="requestTeacherMode()" id="btn-mode-teacher" class="px-2 py-0.5 rounded-md text-[11px] font-semibold transition-all text-indigo-100 hover:text-white">
@@ -286,7 +291,7 @@
             </div>
         </div>
 
-        <!-- Read Content Full Viewer Modal (Clicking a card opens this) -->
+        <!-- Read Content Full Viewer Modal -->
         <div id="modal-view-detail" class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden hidden max-h-[90vh] flex flex-col">
             <div class="bg-indigo-600 text-white p-4 flex justify-between items-center flex-shrink-0">
                 <h3 id="detail-modal-title" class="text-base font-bold truncate">Note Details</h3>
@@ -323,6 +328,7 @@
 
         window.onload = async function() {
             await loadGrades();
+            checkForUnsyncedLocalData();
             switchMode('student');
         };
 
@@ -368,35 +374,95 @@
         }
 
         async function loadGrades() {
+            let remoteGrades = [];
             if (isSupabaseConnected && supabaseClient) {
                 try {
                     const { data, error } = await supabaseClient.from('grades').select('*');
-                    if (!error && data) {
-                        grades = data;
-                        renderDashboardGrades();
-                        return;
-                    }
+                    if (!error && data) remoteGrades = data;
                 } catch (e) {}
             }
             const savedGrades = localStorage.getItem('math_grades_v3');
-            grades = savedGrades ? JSON.parse(savedGrades) : [];
+            const localGrades = savedGrades ? JSON.parse(savedGrades) : [];
+            
+            // Merge remote and local
+            const mergedMap = new Map();
+            localGrades.forEach(g => mergedMap.set(g.id, g));
+            remoteGrades.forEach(g => mergedMap.set(g.id, g));
+            grades = Array.from(mergedMap.values());
+            
+            // Save unified back to local storage
+            localStorage.setItem('math_grades_v3', JSON.stringify(grades));
             renderDashboardGrades();
         }
 
         async function loadContentsForGrade(gradeId) {
+            let remoteContents = [];
             if (isSupabaseConnected && supabaseClient) {
                 try {
                     const { data, error } = await supabaseClient.from('contents').select('*').eq('grade_id', gradeId);
-                    if (!error && data) {
-                        contents = data;
-                        renderContents();
-                        return;
-                    }
+                    if (!error && data) remoteContents = data;
                 } catch (e) {}
             }
             const savedContents = localStorage.getItem('math_contents_v3_' + gradeId);
-            contents = savedContents ? JSON.parse(savedContents) : [];
+            const localContents = savedContents ? JSON.parse(savedContents) : [];
+
+            // Merge remote and local
+            const mergedMap = new Map();
+            localContents.forEach(c => mergedMap.set(c.id, c));
+            remoteContents.forEach(c => mergedMap.set(c.id, c));
+            contents = Array.from(mergedMap.values());
+
+            localStorage.setItem('math_contents_v3_' + gradeId, JSON.stringify(contents));
             renderContents();
+        }
+
+        // Checks if local storage has items not yet on Supabase or if there was a recovery event
+        function checkForUnsyncedLocalData() {
+            if (!isSupabaseConnected || !supabaseClient) return;
+            // Show backup sync option indicator if localStorage has robust content
+            const savedGrades = localStorage.getItem('math_grades_v3');
+            if (savedGrades && JSON.parse(savedGrades).length > 0) {
+                document.getElementById('sync-backup-btn').classList.remove('hidden');
+            }
+        }
+
+        async function syncLocalToSupabaseBackup() {
+            if (!isSupabaseConnected || !supabaseClient) {
+                alert("Supabase is not connected.");
+                return;
+            }
+
+            const btn = document.getElementById('sync-backup-btn');
+            btn.textContent = "⏳ Backing up to Online...";
+            
+            try {
+                // 1. Upsert all local grades
+                const savedGrades = localStorage.getItem('math_grades_v3');
+                if (savedGrades) {
+                    const localGrades = JSON.parse(savedGrades);
+                    for (const g of localGrades) {
+                        await supabaseClient.from('grades').upsert(g, { onConflict: 'id' });
+                    }
+                }
+
+                // 2. Upsert all local contents stored under different grade keys
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('math_contents_v3_')) {
+                        const localContents = JSON.parse(localStorage.getItem(key) || '[]');
+                        for (const c of localContents) {
+                            await supabaseClient.from('contents').upsert(c, { onConflict: 'id' });
+                        }
+                    }
+                }
+
+                btn.textContent = "✅ Backup Restored Online!";
+                setTimeout(() => btn.classList.add('hidden'), 3000);
+                alert("All local data has been successfully backed up and synced to Supabase online!");
+            } catch (err) {
+                btn.textContent = "⚠️ Restore Failed, Retry";
+                alert("Backup sync failed. Please check your network connection or RLS table configuration.");
+            }
         }
 
         function renderDashboardGrades() {
@@ -589,10 +655,13 @@
             const photoB64 = document.getElementById('edit-teacher-photo-base64').value;
             if (photoB64) grade.teacherPhoto = photoB64;
 
-            if (isSupabaseConnected && supabaseClient) {
-                try { await supabaseClient.from('grades').update(grade).eq('id', activeGradeId); } catch (e) {}
-            }
+            // Save local first
             localStorage.setItem('math_grades_v3', JSON.stringify(grades));
+
+            // Sync upsert online via Supabase
+            if (isSupabaseConnected && supabaseClient) {
+                try { await supabaseClient.from('grades').upsert(grade, { onConflict: 'id' }); } catch (e) {}
+            }
             closeModals();
             selectGrade(activeGradeId);
         }
@@ -674,11 +743,14 @@
                 teacherPhoto: teacherPhoto || 'https://placehold.co/150/4f46e5/ffffff?text=TC'
             };
 
-            if (isSupabaseConnected && supabaseClient) {
-                try { await supabaseClient.from('grades').insert([newGrade]); } catch (e) {}
-            }
             grades.push(newGrade);
             localStorage.setItem('math_grades_v3', JSON.stringify(grades));
+
+            // Sync upsert online via Supabase
+            if (isSupabaseConnected && supabaseClient) {
+                try { await supabaseClient.from('grades').upsert(newGrade, { onConflict: 'id' }); } catch (e) {}
+            }
+
             closeModals();
             selectGrade(newGrade.id);
         }
@@ -716,17 +788,19 @@
                 photo: existingItem ? existingItem.photo : ''
             };
 
-            if (isSupabaseConnected && supabaseClient) {
-                try {
-                    if (editId) await supabaseClient.from('contents').update(updatedItem).eq('id', editId);
-                    else await supabaseClient.from('contents').insert([updatedItem]);
-                } catch (e) {}
-            }
-
+            // Save local first
             if (editId) contents = contents.map(c => c.id === editId ? updatedItem : c);
             else contents.push(updatedItem);
 
             localStorage.setItem('math_contents_v3_' + activeGradeId, JSON.stringify(contents));
+
+            // Sync upsert online via Supabase (ensures fallback or update works cleanly)
+            if (isSupabaseConnected && supabaseClient) {
+                try {
+                    await supabaseClient.from('contents').upsert(updatedItem, { onConflict: 'id' });
+                } catch (e) {}
+            }
+
             closeModals();
             renderContents();
         }
