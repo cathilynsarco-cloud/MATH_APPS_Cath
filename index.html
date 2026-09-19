@@ -37,8 +37,8 @@
             transform: scale(0.97);
         }
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 5px;
+            height: 5px;
         }
         ::-webkit-scrollbar-track {
             background: #f1f5f9;
@@ -53,106 +53,113 @@
 
     <div id="app" class="flex-1 flex flex-col h-full overflow-hidden">
         
-        <!-- Top Navigation Bar -->
-        <header class="bg-indigo-600 text-white shadow-md z-20 flex justify-between items-center px-4 py-3 sm:px-6 flex-shrink-0">
-            <div class="flex items-center gap-3">
-                <div class="bg-white/10 p-2 rounded-xl text-2xl">📐</div>
+        <!-- Minimized Top Navigation Bar -->
+        <header class="bg-indigo-600 text-white shadow-sm z-20 flex justify-between items-center px-4 py-2 sm:px-5 flex-shrink-0">
+            <div class="flex items-center gap-2">
+                <button id="back-to-dashboard-btn" onclick="deselectGrade()" class="hidden text-xs bg-white/20 hover:bg-white/30 text-white px-2.5 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1">
+                    ← Grades
+                </button>
+                <div class="bg-white/10 p-1.5 rounded-xl text-lg">📐</div>
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-bold tracking-tight">MathConnect Junior High</h1>
-                    <p class="text-xs text-indigo-200 hidden sm:block">Interactive Teacher Dashboard & Student Hub</p>
+                    <h1 class="text-base sm:text-xl font-bold tracking-tight">MathConnect</h1>
                 </div>
             </div>
             
             <div class="flex items-center gap-2">
                 <!-- Mode Switcher -->
                 <div class="bg-indigo-900/40 p-1 rounded-xl flex items-center border border-indigo-400/30">
-                    <button onclick="requestTeacherMode()" id="btn-mode-teacher" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-indigo-100 hover:text-white">
-                        👨‍🏫 Teacher Mode
+                    <button onclick="requestTeacherMode()" id="btn-mode-teacher" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all text-indigo-100 hover:text-white">
+                        👨‍🏫 Teacher
                     </button>
-                    <button onclick="switchMode('student')" id="btn-mode-student" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-indigo-700 shadow-sm">
-                        🎓 Student Portal
+                    <button onclick="switchMode('student')" id="btn-mode-student" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all bg-white text-indigo-700 shadow-sm">
+                        🎓 Student
                     </button>
                 </div>
             </div>
         </header>
 
         <!-- Main Content Area -->
-        <main class="flex-1 overflow-hidden flex flex-col md:flex-row relative">
+        <main class="flex-1 overflow-hidden flex flex-col relative bg-slate-50">
             
-            <!-- Sidebar: Grade Levels (Compact on mobile so content gets 3/4+ space) -->
-            <aside class="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col z-10 shadow-sm flex-shrink-0">
-                <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <h2 class="font-bold text-slate-700 text-xs uppercase tracking-wider flex items-center gap-2">
-                        <span>📚</span> Grade Levels
-                    </h2>
-                    <button onclick="openAddGradeModal()" id="teacher-add-grade-btn" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-1 hidden">
-                        ➕ Add Grade
-                    </button>
+            <!-- VIEW 1: Grade Level Dashboard (Shown when no grade is selected) -->
+            <div id="view-dashboard" class="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col">
+                <div class="max-w-4xl mx-auto w-full flex-1">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-2xl sm:text-3xl font-bold text-slate-800">Select a Grade Level</h2>
+                            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Choose your class to access notes, reminders, and materials.</p>
+                        </div>
+                        <button onclick="openAddGradeModal()" id="teacher-add-grade-dashboard-btn" class="text-xs sm:text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-semibold transition-all shadow-sm flex items-center gap-1.5 hidden">
+                            ➕ Add Grade Level
+                        </button>
+                    </div>
+
+                    <!-- Grade Cards Grid -->
+                    <div id="dashboard-grade-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-12">
+                        <div class="col-span-full p-8 text-center text-slate-400 text-sm bg-white rounded-2xl border border-slate-200">
+                            Loading grade levels...
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Grade List (Scrollable on mobile up to max-h-36, full height on desktop) -->
-                <div id="grade-list" class="max-h-36 md:max-h-none overflow-y-auto p-2.5 space-y-1.5 bg-slate-50/30">
-                    <div class="p-3 text-center text-slate-400 text-xs">Loading grades...</div>
-                </div>
-
-                <!-- Sync Status Badge -->
-                <div class="px-3 py-2 border-t border-slate-100 bg-slate-50 text-xs text-slate-500 flex items-center justify-between">
+                <!-- Footer Sync Status -->
+                <div class="py-2 text-center text-xs text-slate-400 flex items-center justify-center gap-2 flex-shrink-0">
                     <span id="sync-status" class="flex items-center gap-1.5 text-indigo-600 font-medium">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Supabase Connected
                     </span>
-                    <button onclick="testSupabaseConnection()" class="text-indigo-600 hover:underline">Check</button>
+                    <span>•</span>
+                    <button onclick="testSupabaseConnection()" class="text-indigo-600 hover:underline">Verify Sync</button>
                 </div>
-            </aside>
+            </div>
 
-            <!-- Content View Area (Takes remaining 3/4+ vertical space on mobile and fills rest on desktop) -->
-            <section class="flex-1 flex flex-col overflow-hidden bg-slate-50">
+            <!-- VIEW 2: Active Grade Content Feed (Shown when a grade is clicked) -->
+            <div id="view-grade-content" class="flex-1 flex flex-col overflow-hidden hidden">
                 
-                <!-- Grade Header Bar -->
-                <div id="active-grade-header" class="bg-white border-b border-slate-200 px-6 py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-sm flex-shrink-0">
+                <!-- Active Grade Header -->
+                <div class="bg-white border-b border-slate-200 px-4 sm:px-6 py-2.5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 shadow-sm flex-shrink-0">
                     <div>
-                        <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-full uppercase tracking-wider">Active Level</span>
-                        <h2 id="current-grade-title" class="text-xl sm:text-2xl font-bold text-slate-800 mt-1">Select a Grade Level</h2>
+                        <h2 id="current-grade-title" class="text-lg sm:text-xl font-bold text-slate-800">Grade Title</h2>
                     </div>
                     
                     <!-- Teacher Quick Actions -->
-                    <div id="teacher-actions" class="flex items-center gap-2 hidden flex-wrap">
-                        <button onclick="openEditGradeProfileModal()" class="btn-press bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-1.5">
-                            👤 Edit Teacher Profile
+                    <div id="teacher-actions" class="flex items-center gap-1.5 hidden flex-wrap">
+                        <button onclick="openEditGradeProfileModal()" class="btn-press bg-indigo-500 hover:bg-indigo-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-sm flex items-center gap-1">
+                            👤 Edit Teacher
                         </button>
-                        <button onclick="openAddContentModal('note')" class="btn-press bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-1.5">
-                            📝 Add Note / Material
+                        <button onclick="openAddContentModal('note')" class="btn-press bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-sm flex items-center gap-1">
+                            📝 Note
                         </button>
-                        <button onclick="openAddContentModal('reminder')" class="btn-press bg-rose-500 hover:bg-rose-600 text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-1.5">
-                            ⏰ Add Reminder
+                        <button onclick="openAddContentModal('reminder')" class="btn-press bg-rose-500 hover:bg-rose-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-sm flex items-center gap-1">
+                            ⏰ Reminder
                         </button>
-                        <button onclick="openAddContentModal('link')" class="btn-press bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-1.5">
-                            🔗 Add Link with Preview
+                        <button onclick="openAddContentModal('link')" class="btn-press bg-blue-500 hover:bg-blue-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-sm flex items-center gap-1">
+                            🔗 Link
+                        </button>
+                        <button onclick="deleteActiveGrade()" class="btn-press bg-red-100 hover:bg-red-200 text-red-600 px-2 py-1.5 rounded-lg text-xs font-semibold">
+                            🗑️ Delete Grade
                         </button>
                     </div>
                 </div>
 
-                <!-- Teacher Profile Banner -->
-                <div id="teacher-profile-banner" class="hidden bg-gradient-to-r from-indigo-900 to-indigo-800 text-white px-6 py-3 shadow-inner flex items-center gap-4 flex-shrink-0">
-                    <img id="banner-teacher-photo" src="https://placehold.co/100" alt="Teacher" class="w-12 h-12 rounded-full object-cover border-2 border-indigo-300 shadow-md">
+                <!-- Teacher Profile Banner (Compact) -->
+                <div id="teacher-profile-banner" class="hidden bg-gradient-to-r from-indigo-900 to-indigo-800 text-white px-4 sm:px-6 py-2.5 shadow-inner flex items-center gap-3 flex-shrink-0">
+                    <img id="banner-teacher-photo" src="https://placehold.co/100" alt="Teacher" class="w-10 h-10 rounded-full object-cover border-2 border-indigo-300 shadow-sm">
                     <div>
                         <div class="flex items-center gap-2">
-                            <h3 id="banner-teacher-name" class="font-bold text-base">Teacher Name</h3>
-                            <span class="text-[10px] bg-indigo-700/60 text-indigo-200 px-2 py-0.5 rounded-full">Instructor</span>
+                            <h3 id="banner-teacher-name" class="font-bold text-sm">Teacher Name</h3>
+                            <span class="text-[9px] bg-indigo-700/60 text-indigo-200 px-2 py-0.5 rounded-full">Instructor</span>
                         </div>
-                        <p id="banner-teacher-desc" class="text-xs text-indigo-200 mt-0.5 truncate max-w-md">Teacher description...</p>
+                        <p id="banner-teacher-desc" class="text-xs text-indigo-200 truncate max-w-xs sm:max-w-md">Teacher description...</p>
                     </div>
                 </div>
 
-                <!-- Content Feed Grid (Scrollable Main Area) -->
-                <div class="flex-1 overflow-y-auto p-4 sm:p-6" id="content-container">
-                    <div class="flex flex-col items-center justify-center h-64 text-center">
-                        <div class="text-5xl mb-3">👈</div>
-                        <h3 class="text-lg font-bold text-slate-700">Choose a grade level from the sidebar</h3>
-                        <p class="text-slate-500 text-sm max-w-sm mt-1">Select a grade level to view notes, learning materials, reminders, and links.</p>
-                    </div>
+                <!-- Content Feed Grid (Takes 90% space) -->
+                <div class="flex-1 overflow-y-auto p-3 sm:p-6" id="content-container">
+                    <!-- Dynamic Content Cards Inserted Here -->
                 </div>
 
-            </section>
+            </div>
+
         </main>
     </div>
 
@@ -340,7 +347,6 @@
         let contents = [];
         let currentContentType = 'note';
 
-        // Emptied out hardcoded defaults so app relies strictly on live Supabase online database
         const defaultGrades = [];
         const defaultContents = {};
 
@@ -373,35 +379,34 @@
             currentMode = mode;
             const btnTeacher = document.getElementById('btn-mode-teacher');
             const btnStudent = document.getElementById('btn-mode-student');
-            const teacherAddBtn = document.getElementById('teacher-add-grade-btn');
+            const teacherAddDashBtn = document.getElementById('teacher-add-grade-dashboard-btn');
             const teacherActions = document.getElementById('teacher-actions');
 
             if (mode === 'teacher') {
-                btnTeacher.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-indigo-700 shadow-sm";
-                btnStudent.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-indigo-100 hover:text-white";
-                teacherAddBtn.classList.remove('hidden');
+                btnTeacher.className = "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all bg-white text-indigo-700 shadow-sm";
+                btnStudent.className = "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all text-indigo-100 hover:text-white";
+                teacherAddDashBtn.classList.remove('hidden');
                 if(activeGradeId) teacherActions.classList.remove('hidden');
             } else {
-                btnStudent.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-indigo-700 shadow-sm";
-                btnTeacher.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-indigo-100 hover:text-white";
-                teacherAddBtn.classList.add('hidden');
+                btnStudent.className = "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all bg-white text-indigo-700 shadow-sm";
+                btnTeacher.className = "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all text-indigo-100 hover:text-white";
+                teacherAddDashBtn.classList.add('hidden');
                 teacherActions.classList.add('hidden');
             }
-            renderGrades();
+            renderDashboardGrades();
             if (activeGradeId) renderContents();
         }
 
         async function testSupabaseConnection() {
             const statusEl = document.getElementById('sync-status');
             if (!isSupabaseConnected || !supabaseClient) {
-                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> Local Mode (No SDK)';
+                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> Local Mode';
                 return;
             }
             try {
                 const { data, error } = await supabaseClient.from('grades').select('id').limit(1);
                 if (error) {
-                    console.warn("Supabase connection warning:", error.message);
-                    statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> Check Table RLS / Schema';
+                    statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> Schema Check Needed';
                 } else {
                     statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Supabase Connected';
                 }
@@ -416,19 +421,16 @@
                     const { data, error } = await supabaseClient.from('grades').select('*');
                     if (!error && data) {
                         grades = data;
-                        if (!activeGradeId && grades.length > 0) selectGrade(grades[0].id);
-                        renderGrades();
+                        renderDashboardGrades();
                         return;
                     }
                 } catch (e) {
-                    console.error("Error loading grades from Supabase:", e);
+                    console.error("Error loading grades:", e);
                 }
             }
-            
             const savedGrades = localStorage.getItem('math_grades_v3');
             grades = savedGrades ? JSON.parse(savedGrades) : defaultGrades;
-            if (!activeGradeId && grades.length > 0) selectGrade(grades[0].id);
-            renderGrades();
+            renderDashboardGrades();
         }
 
         async function loadContentsForGrade(gradeId) {
@@ -441,96 +443,38 @@
                         return;
                     }
                 } catch (e) {
-                    console.error("Error loading contents from Supabase:", e);
+                    console.error("Error loading contents:", e);
                 }
             }
-            
             if (!defaultContents[gradeId]) defaultContents[gradeId] = [];
             const savedContents = localStorage.getItem('math_contents_v3_' + gradeId);
             contents = savedContents ? JSON.parse(savedContents) : defaultContents[gradeId];
             renderContents();
         }
 
-        function handleTeacherPhotoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('input-grade-teacher-photo-base64').value = e.target.result;
-            }
-            reader.readAsDataURL(file);
-        }
-
-        function handleEditTeacherPhotoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('edit-teacher-photo-base64').value = e.target.result;
-            }
-            reader.readAsDataURL(file);
-        }
-
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 400;
-                    const MAX_HEIGHT = 300;
-                    let width = img.width;
-                    let height = img.height;
-                    if (width > height) {
-                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                    } else {
-                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                    document.getElementById('input-photo-base64').value = compressedDataUrl;
-                    document.getElementById('photo-preview-img').src = compressedDataUrl;
-                    document.getElementById('photo-preview-container').classList.remove('hidden');
-                }
-                img.src = e.target.result;
-            }
-            reader.readAsDataURL(file);
-        }
-
-        function handleMaterialFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('input-material-file-data').value = e.target.result;
-                document.getElementById('input-material-file-type').value = file.type;
-                document.getElementById('material-file-name').textContent = "Attached: " + file.name;
-                document.getElementById('material-file-name').classList.remove('hidden');
-            }
-            reader.readAsDataURL(file);
-        }
-
-        function renderGrades() {
-            const listEl = document.getElementById('grade-list');
+        function renderDashboardGrades() {
+            const gridEl = document.getElementById('dashboard-grade-grid');
             if (!grades || grades.length === 0) {
-                listEl.innerHTML = `<div class="p-3 text-center text-slate-400 text-xs">No grade levels added yet. Switch to Teacher mode to add one!</div>`;
+                gridEl.innerHTML = `
+                    <div class="col-span-full p-8 text-center bg-white rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="text-4xl mb-2">📚</div>
+                        <h4 class="font-bold text-slate-700 text-base">No Grade Levels Available</h4>
+                        <p class="text-slate-400 text-xs mt-1">Switch to Teacher mode to add your first grade level.</p>
+                    </div>
+                `;
                 return;
             }
 
-            listEl.innerHTML = grades.map(g => `
-                <div onclick="selectGrade('${g.id}')" class="p-3 rounded-xl cursor-pointer transition-all border ${activeGradeId === g.id ? 'bg-indigo-50 border-indigo-300 shadow-sm' : 'bg-white border-slate-100 hover:bg-slate-50'} flex justify-between items-center group">
-                    <div>
-                        <h4 class="font-bold text-slate-800 text-xs sm:text-sm">${escapeHtml(g.name)}</h4>
-                        <p class="text-[11px] text-slate-500 truncate max-w-[160px] sm:max-w-[200px]">${escapeHtml(g.description || '')}</p>
+            gridEl.innerHTML = grades.map(g => `
+                <div onclick="selectGrade('${g.id}')" class="btn-press bg-white p-5 rounded-2xl cursor-pointer transition-all border border-slate-200/80 shadow-sm hover:shadow-md hover:border-indigo-300 flex justify-between items-center group">
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-semibold px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full uppercase tracking-wider">Junior High</span>
+                        <h3 class="font-bold text-slate-800 text-lg group-hover:text-indigo-600 transition-colors">${escapeHtml(g.name)}</h3>
+                        <p class="text-xs text-slate-500">${escapeHtml(g.description || 'View notes, homework, & materials')}</p>
                     </div>
-                    ${currentMode === 'teacher' ? `
-                        <button onclick="event.stopPropagation(); deleteGrade('${g.id}')" class="text-slate-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity">🗑️</button>
-                    ` : '<span class="text-indigo-400 font-bold">›</span>'}
+                    <div class="bg-indigo-50 group-hover:bg-indigo-600 group-hover:text-white text-indigo-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg transition-colors">
+                        ›
+                    </div>
                 </div>
             `).join('');
         }
@@ -552,11 +496,24 @@
                     document.getElementById('teacher-profile-banner').classList.add('hidden');
                 }
             }
+
+            // Switch views
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-grade-content').classList.remove('hidden');
+            document.getElementById('back-to-dashboard-btn').classList.remove('hidden');
+
             if (currentMode === 'teacher') {
                 document.getElementById('teacher-actions').classList.remove('hidden');
             }
-            renderGrades();
             loadContentsForGrade(id);
+        }
+
+        function deselectGrade() {
+            activeGradeId = null;
+            document.getElementById('view-grade-content').classList.add('hidden');
+            document.getElementById('back-to-dashboard-btn').classList.add('hidden');
+            document.getElementById('view-dashboard').classList.remove('hidden');
+            renderDashboardGrades();
         }
 
         function renderContents() {
@@ -568,14 +525,14 @@
                     <div class="flex flex-col items-center justify-center h-64 text-center">
                         <div class="text-4xl mb-2">📂</div>
                         <h4 class="font-bold text-slate-700">No content in this grade yet</h4>
-                        <p class="text-slate-400 text-sm mt-1">${currentMode === 'teacher' ? 'Click the buttons above to add notes, reminders, or links!' : 'Your teacher has not published content here yet.'}</p>
+                        <p class="text-slate-400 text-sm mt-1">${currentMode === 'teacher' ? 'Click the action buttons above to add notes or materials!' : 'Your teacher has not published content here yet.'}</p>
                     </div>
                 `;
                 return;
             }
 
             container.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto pb-12">
                     ${contents.map(item => {
                         let icon = '📝';
                         let badgeColor = 'bg-amber-100 text-amber-700';
@@ -586,26 +543,26 @@
                         return `
                             <div class="bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
                                 <div>
-                                    ${item.photo ? `<div class="w-full h-40 bg-slate-100 overflow-hidden border-b border-slate-100"><img src="${item.photo}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover"></div>` : ''}
-                                    <div class="p-5">
+                                    ${item.photo ? `<div class="w-full h-36 bg-slate-100 overflow-hidden border-b border-slate-100"><img src="${item.photo}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover"></div>` : ''}
+                                    <div class="p-4 sm:p-5">
                                         <div class="flex justify-between items-start gap-2 mb-2">
                                             <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${badgeColor}">${icon} ${typeName}</span>${currentMode === 'teacher' ? `
                                                 <div class="flex items-center gap-2">
-                                                    <button onclick="editContent('${item.id}')" class="text-slate-400 hover:text-indigo-600 text-xs">✏️ Edit</button>
+                                                    <button onclick="editContent('${item.id}')" class="text-slate-400 hover:text-indigo-600 text-xs font-semibold">✏️ Edit</button>
                                                     <button onclick="deleteContent('${item.id}')" class="text-slate-300 hover:text-red-500 text-xs">🗑️</button>
                                                 </div>
                                             ` : ''}
                                         </div>
-                                        <h3 class="font-bold text-slate-800 text-lg mb-2">${escapeHtml(item.title)}</h3>${item.type === 'note' ? `
+                                        <h3 class="font-bold text-slate-800 text-base sm:text-lg mb-2">${escapeHtml(item.title)}</h3>${item.type === 'note' ? `
                                             <div class="space-y-3">
                                                 ${item.body ? `<p class="text-slate-600 text-sm whitespace-pre-line bg-slate-50 p-3 rounded-xl border border-slate-100">${escapeHtml(item.body)}</p>` : ''}
                                                 
                                                 ${item.fileData ? `
                                                     <div class="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
-                                                        ${item.fileType && item.fileType.includes('image') ? `<img src="${item.fileData}" class="max-h-48 rounded-lg mx-auto mb-2">` : ''}
-                                                        ${item.fileType && item.fileType.includes('pdf') ? `<iframe src="${item.fileData}" class="w-full h-48 rounded border border-indigo-200"></iframe>` : ''}
+                                                        ${item.fileType && item.fileType.includes('image') ? `<img src="${item.fileData}" class="max-h-40 rounded-lg mx-auto mb-2">` : ''}
+                                                        ${item.fileType && item.fileType.includes('pdf') ? `<iframe src="${item.fileData}" class="w-full h-40 rounded border border-indigo-200"></iframe>` : ''}
                                                         <div class="mt-2 text-center">
-                                                            <a href="${item.fileData}" download="learning-material" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-medium inline-block">📥 Download Uploaded Material</a>
+                                                            <a href="${item.fileData}" download="learning-material" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-medium inline-block">📥 Download File</a>
                                                         </div>
                                                     </div>
                                                 ` : ''}
@@ -628,7 +585,7 @@
                                         ${item.type === 'link' ? `
                                             <div class="space-y-2">
                                                 <p class="text-slate-600 text-sm">${escapeHtml(item.description || '')}</p>
-                                                <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline text-sm font-medium break-all flex items-center gap-1">🌐 Open Link in New Tab ↗</a>
+                                                <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline text-sm font-medium break-all flex items-center gap-1">🌐 Open Link ↗</a>
                                             </div>
                                         ` : ''}
                                     </div>
@@ -670,10 +627,9 @@
 
             if (isSupabaseConnected && supabaseClient) {
                 try {
-                    const { error } = await supabaseClient.from('grades').update(grade).eq('id', activeGradeId);
-                    if (error) console.error("Supabase profile update error:", error.message);
+                    await supabaseClient.from('grades').update(grade).eq('id', activeGradeId);
                 } catch (e) {
-                    console.error("Supabase profile update exception:", e);
+                    console.error("Profile update error:", e);
                 }
             }
 
@@ -776,10 +732,9 @@
 
             if (isSupabaseConnected && supabaseClient) {
                 try {
-                    const { error } = await supabaseClient.from('grades').insert([newGrade]);
-                    if (error) console.error("Supabase grade insert error:", error.message);
+                    await supabaseClient.from('grades').insert([newGrade]);
                 } catch (e) {
-                    console.error("Supabase grade insert exception:", e);
+                    console.error("Grade insert error:", e);
                 }
             }
 
@@ -787,31 +742,22 @@
             localStorage.setItem('math_grades_v3', JSON.stringify(grades));
             closeModals();
             selectGrade(newGrade.id);
-            renderGrades();
         }
 
-        async function deleteGrade(id) {
-            if (!confirm("Are you sure you want to delete this grade level?")) return;
+        async function deleteActiveGrade() {
+            if (!confirm("Are you sure you want to delete this entire grade level?")) return;
+            const id = activeGradeId;
             if (isSupabaseConnected && supabaseClient) {
                 try {
-                    const { error } = await supabaseClient.from('grades').delete().eq('id', id);
-                    if (error) console.error("Supabase grade delete error:", error.message);
+                    await supabaseClient.from('grades').delete().eq('id', id);
                 } catch (e) {
-                    console.error("Supabase grade delete exception:", e);
+                    console.error("Grade delete error:", e);
                 }
             }
             grades = grades.filter(g => g.id !== id);
             localStorage.setItem('math_grades_v3', JSON.stringify(grades));
-            if (activeGradeId === id) {
-                activeGradeId = grades.length > 0 ? grades[0].id : null;
-            }
+            deselectGrade();
             loadGrades();
-            if (activeGradeId) selectGrade(activeGradeId);
-            else {
-                document.getElementById('current-grade-title').textContent = "Select a Grade Level";
-                document.getElementById('teacher-profile-banner').classList.add('hidden');
-                document.getElementById('content-container').innerHTML = '';
-            }
         }
 
         async function saveNewContent() {
@@ -839,17 +785,13 @@
 
             if (isSupabaseConnected && supabaseClient) {
                 try {
-                    let error;
                     if (editId) {
-                        const res = await supabaseClient.from('contents').update(updatedItem).eq('id', editId);
-                        error = res.error;
+                        await supabaseClient.from('contents').update(updatedItem).eq('id', editId);
                     } else {
-                        const res = await supabaseClient.from('contents').insert([updatedItem]);
-                        error = res.error;
+                        await supabaseClient.from('contents').insert([updatedItem]);
                     }
-                    if (error) console.error("Supabase content save error:", error.message);
                 } catch (e) {
-                    console.error("Supabase content save exception:", e);
+                    console.error("Content save error:", e);
                 }
             }
 
@@ -868,15 +810,74 @@
             if (!confirm("Delete this content item?")) return;
             if (isSupabaseConnected && supabaseClient) {
                 try {
-                    const { error } = await supabaseClient.from('contents').delete().eq('id', id);
-                    if (error) console.error("Supabase content delete error:", error.message);
+                    await supabaseClient.from('contents').delete().eq('id', id);
                 } catch (e) {
-                    console.error("Supabase content delete exception:", e);
+                    console.error("Content delete error:", e);
                 }
             }
             contents = contents.filter(c => c.id !== id);
             localStorage.setItem('math_contents_v3_' + activeGradeId, JSON.stringify(contents));
             renderContents();
+        }
+
+        function handleTeacherPhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById('input-grade-teacher-photo-base64').value = e.target.result; }
+            reader.readAsDataURL(file);
+        }
+
+        function handleEditTeacherPhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById('edit-teacher-photo-base64').value = e.target.result; }
+            reader.readAsDataURL(file);
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 400;
+                    const MAX_HEIGHT = 300;
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) {
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    } else {
+                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    document.getElementById('input-photo-base64').value = compressedDataUrl;
+                    document.getElementById('photo-preview-img').src = compressedDataUrl;
+                    document.getElementById('photo-preview-container').classList.remove('hidden');
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function handleMaterialFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('input-material-file-data').value = e.target.result;
+                document.getElementById('input-material-file-type').value = file.type;
+                document.getElementById('material-file-name').textContent = "Attached: " + file.name;
+                document.getElementById('material-file-name').classList.remove('hidden');
+            }
+            reader.readAsDataURL(file);
         }
 
         function escapeHtml(str) {
