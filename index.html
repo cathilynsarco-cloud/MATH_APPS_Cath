@@ -1,889 +1,496 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MathConnect - Junior High Hub</title>
-    <!-- Tailwind CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Grade Spread: Visualizing Variance & Notes</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Fredoka & Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        fun: ['Fredoka', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
-    
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
-            touch-action: manipulation;
+            color: #334155;
         }
-        h1, h2, h3, .font-fun {
-            font-family: 'Fredoka', sans-serif;
+        
+        .box-plot-container {
+            width: 100%;
+            height: 140px;
+            position: relative;
+            margin-bottom: 2rem;
+            background-color: #f1f5f9;
+            border-radius: 0.5rem;
+            padding: 20px 0 10px 0;
+            overflow: hidden;
         }
-        .btn-press:active {
-            transform: scale(0.97);
+
+        .axis-line {
+            position: absolute;
+            bottom: 20px;
+            left: 5%;
+            width: 90%;
+            height: 2px;
+            background-color: #94a3b8;
         }
-        ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
+
+        .tick-mark {
+            position: absolute;
+            bottom: 15px;
+            width: 2px;
+            height: 10px;
+            background-color: #94a3b8;
+            transform: translateX(-50%);
         }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
+
+        .tick-label {
+            position: absolute;
+            bottom: 0;
+            font-size: 0.75rem;
+            color: #64748b;
+            transform: translateX(-50%);
+            white-space: nowrap;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
+
+        .whisker-line {
+            position: absolute;
+            top: 50%;
+            height: 2px;
+            background-color: #3b82f6;
+            transform: translateY(-50%);
+            z-index: 10;
+        }
+
+        .whisker-end {
+            position: absolute;
+            top: 50%;
+            width: 2px;
+            height: 20px;
+            background-color: #3b82f6;
+            transform: translateY(-50%);
+            z-index: 10;
+        }
+
+        .box {
+            position: absolute;
+            top: 50%;
+            height: 40px;
+            background-color: rgba(59, 130, 246, 0.2);
+            border: 2px solid #3b82f6;
+            transform: translateY(-50%);
+            z-index: 20;
+            box-sizing: border-box;
+        }
+
+        .median-line {
+            position: absolute;
+            top: 50%;
+            width: 2px;
+            height: 40px;
+            background-color: #1e293b;
+            transform: translateY(-50%);
+            z-index: 30;
+        }
+        
+        .data-point {
+            position: absolute;
+            top: 25%;
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 40;
+            opacity: 0.8;
+        }
+
+        .threshold-line {
+            position: absolute;
+            top: 0;
+            bottom: 20px;
+            width: 2px;
+            background-color: #ef4444;
+            border-left: 2px dashed #ef4444;
+            background: none;
+            transform: translateX(-50%);
+            z-index: 5;
+        }
+
+        .threshold-label {
+            position: absolute;
+            top: 5px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #ef4444;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            background: rgba(241, 245, 249, 0.8);
+            padding: 0 4px;
+            border-radius: 4px;
         }
     </style>
 </head>
-<body class="h-full flex flex-col text-slate-800 bg-slate-50 overflow-hidden">
+<body class="p-6 md:p-12">
 
-    <div id="app" class="flex-1 flex flex-col h-full overflow-hidden">
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         
-        <!-- Minimized Top Navigation Bar -->
-        <header class="bg-indigo-600 text-white shadow-sm z-20 flex justify-between items-center px-4 py-2 sm:px-5 flex-shrink-0">
-            <div class="flex items-center gap-2">
-                <button id="back-to-dashboard-btn" onclick="deselectGrade()" class="hidden text-xs bg-white/20 hover:bg-white/30 text-white px-2.5 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1">
-                    ← Grades
-                </button>
-                <div class="bg-white/10 p-1.5 rounded-xl text-lg">📐</div>
-                <div>
-                    <h1 class="text-base sm:text-xl font-bold tracking-tight">MathConnect</h1>
-                </div>
-            </div>
+        <div class="bg-blue-600 text-white p-6">
+            <h1 class="text-3xl font-bold">The Grade Spread & Study Hub</h1>
+            <p class="text-blue-100 mt-2">Interactive Analytics & Cloud Notes (Stored Online via Supabase)</p>
+        </div>
+
+        <div class="p-6 md:p-8 space-y-8">
             
-            <div class="flex items-center gap-2">
-                <!-- Mode Switcher -->
-                <div class="bg-indigo-900/40 p-1 rounded-xl flex items-center border border-indigo-400/30">
-                    <button onclick="requestTeacherMode()" id="btn-mode-teacher" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all text-indigo-100 hover:text-white">
-                        👨‍🏫 Teacher
-                    </button>
-                    <button onclick="switchMode('student')" id="btn-mode-student" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all bg-white text-indigo-700 shadow-sm">
-                        🎓 Student
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content Area -->
-        <main class="flex-1 overflow-hidden flex flex-col relative bg-slate-50">
-            
-            <!-- VIEW 1: Grade Level Dashboard (Shown when no grade is selected) -->
-            <div id="view-dashboard" class="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col">
-                <div class="max-w-4xl mx-auto w-full flex-1">
-                    <div class="flex justify-between items-center mb-6">
-                        <div>
-                            <h2 class="text-2xl sm:text-3xl font-bold text-slate-800">Select a Grade Level</h2>
-                            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Choose your class to access notes, reminders, and materials.</p>
-                        </div>
-                        <button onclick="openAddGradeModal()" id="teacher-add-grade-dashboard-btn" class="text-xs sm:text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-semibold transition-all shadow-sm flex items-center gap-1.5 hidden">
-                            ➕ Add Grade Level
-                        </button>
-                    </div>
-
-                    <!-- Grade Cards Grid -->
-                    <div id="dashboard-grade-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-12">
-                        <div class="col-span-full p-8 text-center text-slate-400 text-sm bg-white rounded-2xl border border-slate-200">
-                            Loading grade levels...
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Footer Sync Status -->
-                <div class="py-2 text-center text-xs text-slate-400 flex items-center justify-center gap-2 flex-shrink-0">
-                    <span id="sync-status" class="flex items-center gap-1.5 text-indigo-600 font-medium">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Supabase Connected
-                    </span>
-                    <span>•</span>
-                    <button onclick="testSupabaseConnection()" class="text-indigo-600 hover:underline">Verify Sync</button>
-                </div>
-            </div>
-
-            <!-- VIEW 2: Active Grade Content Feed (Shown when a grade is clicked) -->
-            <div id="view-grade-content" class="flex-1 flex flex-col overflow-hidden hidden">
+            <!-- Box Plot Section -->
+            <section>
+                <h2 class="text-2xl font-bold mb-4">Visualizing the Spread</h2>
+                <p class="mb-4">Here is how a <strong>Box-and-Whisker Plot</strong> helps us see grade variance instantly. Red dashed line indicates the <strong>80</strong> Honor Roll cutoff.</p>
                 
-                <!-- Active Grade Header -->
-                <div class="bg-white border-b border-slate-200 px-4 sm:px-6 py-2.5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 shadow-sm flex-shrink-0">
-                    <div>
-                        <h2 id="current-grade-title" class="text-lg sm:text-xl font-bold text-slate-800">Grade Title</h2>
+                <div class="mb-6">
+                    <h3 class="font-bold text-blue-700 mb-2">Chloe's Grades (Low Spread)</h3>
+                    <div id="plot-student1" class="box-plot-container"></div>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-purple-700 mb-2">Victor's Grades (High Spread)</h3>
+                    <div id="plot-student2" class="box-plot-container"></div>
+                </div>
+            </section>
+
+            <!-- Custom Plot & Supabase Dataset Section -->
+            <section class="bg-gray-50 p-6 rounded-lg border border-gray-200 shadow-sm border-t-4 border-t-green-500">
+                <h2 class="text-2xl font-bold mb-4">Make & Save a Box Plot Online</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <input type="text" id="dataset-name" class="p-3 border border-gray-300 rounded-lg outline-none bg-white" placeholder="Student / Dataset Name">
+                    <input type="text" id="custom-data" class="md:col-span-2 p-3 border border-gray-300 rounded-lg outline-none font-mono bg-white" placeholder="e.g., 79, 81, 88, 90, 95" value="79, 81, 88, 90, 95, 95, 98, 99">
+                </div>
+
+                <div class="flex flex-wrap gap-4 mb-6">
+                    <button onclick="generateCustomPlot()" class="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors">Preview Plot</button>
+                    <button onclick="saveToSupabase()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors">Save Dataset Online</button>
+                    <div class="flex-1">
+                        <select id="saved-datasets" onchange="loadFromSupabaseSelection()" class="w-full p-2.5 border border-gray-300 rounded-lg bg-white text-sm">
+                            <option value="">-- Load Saved Datasets from Supabase --</option>
+                        </select>
                     </div>
-                    
-                    <!-- Teacher Quick Actions -->
-                    <div id="teacher-actions" class="flex items-center gap-1.5 hidden flex-wrap">
-                        <button onclick="openEditGradeProfileModal()" class="btn-press bg-indigo-500 hover:bg-indigo-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-sm flex items-center gap-1">
-                            👤 Edit Teacher
-                        </button>
-                        <button onclick="openAddContentModal('note')" class="btn-press bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-sm flex items-center gap-1">
-                            📝 Note
-                        </button>
-                        <button onclick="openAddContentModal('reminder')" class="btn-press bg-rose-500 hover:bg-rose-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-sm flex items-center gap-1">
-                            ⏰ Reminder
-                        </button>
-                        <button onclick="openAddContentModal('link')" class="btn-press bg-blue-500 hover:bg-blue-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-sm flex items-center gap-1">
-                            🔗 Link
-                        </button>
-                        <button onclick="deleteActiveGrade()" class="btn-press bg-red-100 hover:bg-red-200 text-red-600 px-2 py-1.5 rounded-lg text-xs font-semibold">
-                            🗑️ Delete Grade
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Teacher Profile Banner (Compact) -->
-                <div id="teacher-profile-banner" class="hidden bg-gradient-to-r from-indigo-900 to-indigo-800 text-white px-4 sm:px-6 py-2.5 shadow-inner flex items-center gap-3 flex-shrink-0">
-                    <img id="banner-teacher-photo" src="https://placehold.co/100" alt="Teacher" class="w-10 h-10 rounded-full object-cover border-2 border-indigo-300 shadow-sm">
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <h3 id="banner-teacher-name" class="font-bold text-sm">Teacher Name</h3>
-                            <span class="text-[9px] bg-indigo-700/60 text-indigo-200 px-2 py-0.5 rounded-full">Instructor</span>
-                        </div>
-                        <p id="banner-teacher-desc" class="text-xs text-indigo-200 truncate max-w-xs sm:max-w-md">Teacher description...</p>
-                    </div>
-                </div>
-
-                <!-- Content Feed Grid (Takes 90% space) -->
-                <div class="flex-1 overflow-y-auto p-3 sm:p-6" id="content-container">
-                    <!-- Dynamic Content Cards Inserted Here -->
-                </div>
-
-            </div>
-
-        </main>
-    </div>
-
-    <!-- Modals -->
-    <div id="modal-container" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        
-        <!-- Teacher Password Modal -->
-        <div id="modal-teacher-auth" class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden hidden transform transition-all">
-            <div class="bg-indigo-600 text-white p-5 flex justify-between items-center">
-                <h3 class="text-xl font-bold">Teacher Authentication</h3>
-                <button onclick="closeModals()" class="text-indigo-200 hover:text-white text-xl font-bold">✕</button>
-            </div>
-            <div class="p-6 space-y-4">
-                <p class="text-xs text-slate-500">Please enter the teacher access password to manage content and grade levels.</p>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Password</label>
-                    <input type="password" id="input-teacher-password" placeholder="Enter password..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500" onkeydown="if(event.key==='Enter') verifyTeacherPassword()">
-                </div>
-                <div class="pt-2 flex justify-end gap-3">
-                    <button onclick="closeModals()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium">Cancel</button>
-                    <button onclick="verifyTeacherPassword()" class="btn-press px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-md">Authenticate</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Add Grade Modal -->
-        <div id="modal-add-grade" class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden hidden transform transition-all max-h-[90vh] flex flex-col">
-            <div class="bg-indigo-600 text-white p-5 flex justify-between items-center flex-shrink-0">
-                <h3 class="text-xl font-bold">Add New Grade Level</h3>
-                <button onclick="closeModals()" class="text-indigo-200 hover:text-white text-xl font-bold">✕</button>
-            </div>
-            <div class="p-6 space-y-3 overflow-y-auto flex-1">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Grade Name</label>
-                    <input type="text" id="input-grade-name" placeholder="e.g., 7th Grade Math" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Description / Topic Focus</label>
-                    <input type="text" id="input-grade-desc" placeholder="e.g., Pre-Algebra & Equations" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
-                </div>
-                <hr class="border-slate-100 my-2">
-                <h4 class="font-bold text-slate-700 text-sm">Teacher Profile for this Grade</h4>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Teacher Name</label>
-                    <input type="text" id="input-grade-teacher-name" placeholder="e.g., Mr. John Doe" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Teacher Description / Bio</label>
-                    <input type="text" id="input-grade-teacher-desc" placeholder="e.g., Department Head & Math Specialist" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Teacher Photo</label>
-                    <input type="file" id="input-grade-teacher-photo-file" accept="image/*" onchange="handleTeacherPhotoUpload(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700">
-                    <input type="hidden" id="input-grade-teacher-photo-base64">
-                </div>
-                <div class="pt-2 flex justify-end gap-3 border-t border-slate-100">
-                    <button onclick="closeModals()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium text-sm">Cancel</button>
-                    <button onclick="saveNewGrade()" class="btn-press px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-md text-sm">Create Grade</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Edit Teacher Profile Modal -->
-        <div id="modal-edit-grade-profile" class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden hidden transform transition-all">
-            <div class="bg-indigo-600 text-white p-5 flex justify-between items-center">
-                <h3 class="text-xl font-bold">Edit Teacher Profile</h3>
-                <button onclick="closeModals()" class="text-indigo-200 hover:text-white text-xl font-bold">✕</button>
-            </div>
-            <div class="p-6 space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Teacher Name</label>
-                    <input type="text" id="edit-teacher-name" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Teacher Description / Bio</label>
-                    <input type="text" id="edit-teacher-desc" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Teacher Photo</label>
-                    <input type="file" id="edit-teacher-photo-file" accept="image/*" onchange="handleEditTeacherPhotoUpload(event)" class="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700">
-                    <input type="hidden" id="edit-teacher-photo-base64">
-                </div>
-                <div class="pt-2 flex justify-end gap-3">
-                    <button onclick="closeModals()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium text-sm">Cancel</button>
-                    <button onclick="saveTeacherProfile()" class="btn-press px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-md text-sm">Save Profile</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Add/Edit Content Modal -->
-        <div id="modal-add-content" class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden hidden transform transition-all max-h-[90vh] flex flex-col">
-            <div id="content-modal-header" class="bg-indigo-600 text-white p-5 flex justify-between items-center flex-shrink-0">
-                <h3 id="content-modal-title" class="text-xl font-bold">Add Content</h3>
-                <button onclick="closeModals()" class="text-indigo-200 hover:text-white text-xl font-bold">✕</button>
-            </div>
-            <div class="p-6 space-y-4 overflow-y-auto flex-1">
-                <input type="hidden" id="input-edit-id">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Title</label>
-                    <input type="text" id="input-content-title" placeholder="e.g., Chapter 1 Review Material" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
                 </div>
                 
-                <!-- Note & Material Field Group -->
-                <div id="field-container-note" class="content-field-group space-y-3">
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Note Text / Explanation</label>
-                        <textarea id="input-content-body" rows="3" placeholder="Write lesson notes, formulas, or instructions here..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 font-sans text-sm"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Upload Learning Material (PDF, Photo, or HTML file)</label>
-                        <input type="file" id="input-material-file" accept=".pdf,image/*,.html,.htm" onchange="handleMaterialFileUpload(event)" class="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 cursor-pointer">
-                        <input type="hidden" id="input-material-file-data">
-                        <input type="hidden" id="input-material-file-type">
-                        <p id="material-file-name" class="text-xs text-indigo-600 mt-1 hidden"></p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Or Paste Custom HTML / Embed Code</label>
-                        <textarea id="input-custom-html" rows="2" placeholder="&lt;iframe src='...'&gt;&lt;/iframe&gt; or custom HTML markup..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs"></textarea>
-                    </div>
-                </div>
+                <div id="plot-custom" class="box-plot-container mb-2"></div>
+                <div id="custom-stats" class="text-sm text-gray-700 mt-4 text-center h-6 bg-white p-2 rounded flex justify-center gap-4 hidden md:flex border"></div>
+            </section>
 
-                <!-- Reminder Field Group -->
-                <div id="field-container-reminder" class="content-field-group hidden space-y-3">
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Due Date & Time</label>
-                        <input type="datetime-local" id="input-reminder-date" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Reminder Details</label>
-                        <textarea id="input-reminder-body" rows="3" placeholder="Enter details regarding quiz, homework or exam..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm"></textarea>
-                    </div>
+            <!-- Notes & Reminders Section (Title + One-Line Snippet) -->
+            <section class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm border-t-4 border-t-blue-500">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold">Class Notes & Reminders</h2>
+                    <span class="text-xs text-gray-500">Click any note to read full details</span>
                 </div>
+                <div id="notes-container" class="space-y-3">
+                    <!-- Dynamic Notes will load here -->
+                    <p class="text-gray-500 text-sm">Loading notes from Supabase...</p>
+                </div>
+            </section>
 
-                <!-- Link & Photo Field Group -->
-                <div id="field-container-link" class="content-field-group hidden space-y-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">External Website URL (Google, YouTube, etc.)</label>
-                        <input type="url" id="input-content-url" placeholder="https://www.youtube.com/watch?v=..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Details / Description</label>
-                        <textarea id="input-link-desc" rows="3" placeholder="Briefly describe what students will find on this link..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Preview Cover Photo (Auto-compressed)</label>
-                        <div class="flex items-center gap-4">
-                            <input type="file" id="input-photo-file" accept="image/*" onchange="handleImageUpload(event)" class="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 cursor-pointer">
-                        </div>
-                        <input type="hidden" id="input-photo-base64">
-                        <div id="photo-preview-container" class="mt-3 hidden">
-                            <p class="text-xs text-slate-400 mb-1">Compressed Preview:</p>
-                            <img id="photo-preview-img" src="" alt="Preview" class="h-32 w-auto rounded-xl object-cover border border-slate-200">
-                        </div>
-                    </div>
+            <!-- PDF & Document Resource Viewer Section -->
+            <section class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm border-t-4 border-t-purple-500">
+                <h2 class="text-2xl font-bold mb-4">Study Documents & PDFs</h2>
+                <p class="text-sm text-gray-600 mb-4">View or download reference documents stored online.</p>
+                
+                <div id="documents-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dynamic Document Cards will load here -->
+                    <p class="text-gray-500 text-sm">Loading documents...</p>
                 </div>
+            </section>
 
-                <div class="pt-2 flex justify-end gap-3 border-t border-slate-100 flex-shrink-0">
-                    <button onclick="closeModals()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium text-sm">Cancel</button>
-                    <button onclick="saveNewContent()" class="btn-press px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-md text-sm">Save Content</button>
-                </div>
-            </div>
         </div>
-
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Modal for Full Note Details -->
+    <div id="note-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl relative max-h-[80vh] flex flex-col">
+            <h3 id="modal-title" class="text-2xl font-bold text-blue-800 mb-2"></h3>
+            <div id="modal-body" class="text-gray-700 overflow-y-auto flex-1 my-4 pr-2 space-y-4 whitespace-pre-wrap text-sm leading-relaxed border-t border-b py-4"></div>
+            <button onclick="closeModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg self-end">Close</button>
+        </div>
+    </div>
 
     <script>
-        const SUPABASE_URL = 'https://lpheculpaxwakrqshgmf.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_xo9Ju3gxXbhpImWPTfaicA_-ay4Fua-';
+        // Supabase Configuration (Existing credentials preserved)
+        const SUPABASE_URL = 'https://vvhxtllvsjngtjpetyxt.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_SM0fkIZ3zVzVePl1e8QyXQ_VpJHDz-G';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let supabaseClient = null;
-        let isSupabaseConnected = false;
+        const student1Data = [88, 89, 89, 90, 90, 91, 91, 92];
+        const student2Data = [74, 82, 85, 94, 96, 96, 96, 97];
+        const minVal = 70; 
+        const maxVal = 100; 
+        const honorRollCutoff = 80;
 
-        try {
-            if (window.supabase && typeof window.supabase.createClient === 'function') {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                isSupabaseConnected = true;
+        // Box plot helpers
+        function getQuartiles(data) {
+            const sorted = [...data].sort((a, b) => a - b);
+            const min = sorted[0];
+            const max = sorted[sorted.length - 1];
+            function getMedian(arr) {
+                if (arr.length === 0) return 0;
+                const mid = Math.floor(arr.length / 2);
+                return arr.length % 2 !== 0 ? arr[mid] : (arr[mid - 1] + arr[mid]) / 2;
             }
-        } catch (err) {}
-
-        let currentMode = 'student';
-        let grades = [];
-        let activeGradeId = null;
-        let contents = [];
-        let currentContentType = 'note';
-
-        const defaultGrades = [];
-        const defaultContents = {};
-
-        window.onload = async function() {
-            await loadGrades();
-            switchMode('student');
-            testSupabaseConnection();
-        };
-
-        function requestTeacherMode() {
-            if (currentMode === 'teacher') return;
-            document.getElementById('modal-container').classList.remove('hidden');
-            document.getElementById('modal-teacher-auth').classList.remove('hidden');
-            document.getElementById('input-teacher-password').value = '';
-            setTimeout(() => document.getElementById('input-teacher-password').focus(), 100);
+            const median = getMedian(sorted);
+            const midIndex = Math.floor(sorted.length / 2);
+            let lowerHalf = sorted.length % 2 === 0 ? sorted.slice(0, midIndex) : sorted.slice(0, midIndex);
+            let upperHalf = sorted.length % 2 === 0 ? sorted.slice(midIndex) : sorted.slice(midIndex + 1);
+            return { min, q1: getMedian(lowerHalf), median, q3: getMedian(upperHalf), max };
         }
 
-        function verifyTeacherPassword() {
-            const pwd = document.getElementById('input-teacher-password').value;
-            if (pwd === '121488') {
-                closeModals();
-                switchMode('teacher');
-            } else {
-                alert("Incorrect password. Access denied.");
-                document.getElementById('input-teacher-password').value = '';
-            }
+        function valToPercent(val, minV, maxV) {
+            const range = maxV - minV;
+            if (range === 0) return 50; 
+            return 5 + (((val - minV) / range) * 90); 
         }
 
-        function switchMode(mode) {
-            currentMode = mode;
-            const btnTeacher = document.getElementById('btn-mode-teacher');
-            const btnStudent = document.getElementById('btn-mode-student');
-            const teacherAddDashBtn = document.getElementById('teacher-add-grade-dashboard-btn');
-            const teacherActions = document.getElementById('teacher-actions');
+        function drawAxis(containerId, minV, maxV, showCutoff = false) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = ''; 
+            const axisLine = document.createElement('div');
+            axisLine.className = 'axis-line';
+            container.appendChild(axisLine);
 
-            if (mode === 'teacher') {
-                btnTeacher.className = "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all bg-white text-indigo-700 shadow-sm";
-                btnStudent.className = "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all text-indigo-100 hover:text-white";
-                teacherAddDashBtn.classList.remove('hidden');
-                if(activeGradeId) teacherActions.classList.remove('hidden');
-            } else {
-                btnStudent.className = "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all bg-white text-indigo-700 shadow-sm";
-                btnTeacher.className = "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all text-indigo-100 hover:text-white";
-                teacherAddDashBtn.classList.add('hidden');
-                teacherActions.classList.add('hidden');
-            }
-            renderDashboardGrades();
-            if (activeGradeId) renderContents();
-        }
+            const range = maxV - minV;
+            const step = range / 6;
+            const tickValues = [minV, minV + step, minV + step * 2, minV + step * 3, minV + step * 4, minV + step * 5, maxV];
+            
+            tickValues.forEach(val => {
+                const percentPos = valToPercent(val, minV, maxV);
+                const tick = document.createElement('div');
+                tick.className = 'tick-mark';
+                tick.style.left = `${percentPos}%`;
+                container.appendChild(tick);
 
-        async function testSupabaseConnection() {
-            const statusEl = document.getElementById('sync-status');
-            if (!isSupabaseConnected || !supabaseClient) {
-                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> Local Mode';
-                return;
-            }
-            try {
-                const { data, error } = await supabaseClient.from('grades').select('id').limit(1);
-                if (error) {
-                    statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> Schema Check Needed';
-                } else {
-                    statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Supabase Connected';
-                }
-            } catch (err) {
-                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> Offline Fallback';
+                const label = document.createElement('div');
+                label.className = 'tick-label';
+                label.style.left = `${percentPos}%`;
+                label.innerText = Math.round(val);
+                container.appendChild(label);
+            });
+
+            if (showCutoff && minV <= honorRollCutoff && maxV >= honorRollCutoff) {
+                const cutoffPos = valToPercent(honorRollCutoff, minV, maxV);
+                const thresholdLine = document.createElement('div');
+                thresholdLine.className = 'threshold-line';
+                thresholdLine.style.left = `${cutoffPos}%`;
+                container.appendChild(thresholdLine);
+
+                const thresholdLabel = document.createElement('div');
+                thresholdLabel.className = 'threshold-label';
+                thresholdLabel.style.left = `${cutoffPos}%`;
+                thresholdLabel.innerText = "Cutoff (80)";
+                container.appendChild(thresholdLabel);
             }
         }
 
-        async function loadGrades() {
-            if (isSupabaseConnected && supabaseClient) {
-                try {
-                    const { data, error } = await supabaseClient.from('grades').select('*');
-                    if (!error && data) {
-                        grades = data;
-                        renderDashboardGrades();
-                        return;
-                    }
-                } catch (e) {
-                    console.error("Error loading grades:", e);
-                }
-            }
-            const savedGrades = localStorage.getItem('math_grades_v3');
-            grades = savedGrades ? JSON.parse(savedGrades) : defaultGrades;
-            renderDashboardGrades();
-        }
+        function drawBoxPlot(containerId, data, colorTheme, minV, maxV) {
+            const container = document.getElementById(containerId);
+            const stats = getQuartiles(data);
+            const pMin = valToPercent(stats.min, minV, maxV);
+            const pQ1 = valToPercent(stats.q1, minV, maxV);
+            const pMed = valToPercent(stats.median, minV, maxV);
+            const pQ3 = valToPercent(stats.q3, minV, maxV);
+            const pMax = valToPercent(stats.max, minV, maxV);
 
-        async function loadContentsForGrade(gradeId) {
-            if (isSupabaseConnected && supabaseClient) {
-                try {
-                    const { data, error } = await supabaseClient.from('contents').select('*').eq('grade_id', gradeId);
-                    if (!error && data) {
-                        contents = data;
-                        renderContents();
-                        return;
-                    }
-                } catch (e) {
-                    console.error("Error loading contents:", e);
-                }
-            }
-            if (!defaultContents[gradeId]) defaultContents[gradeId] = [];
-            const savedContents = localStorage.getItem('math_contents_v3_' + gradeId);
-            contents = savedContents ? JSON.parse(savedContents) : defaultContents[gradeId];
-            renderContents();
-        }
+            const isCustom = colorTheme === 'custom';
+            const color = isCustom ? '#10b981' : (colorTheme === 'student2' ? '#8b5cf6' : '#3b82f6'); 
+            const bgColor = isCustom ? 'rgba(16, 185, 129, 0.2)' : (colorTheme === 'student2' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(59, 130, 246, 0.2)');
 
-        function renderDashboardGrades() {
-            const gridEl = document.getElementById('dashboard-grade-grid');
-            if (!grades || grades.length === 0) {
-                gridEl.innerHTML = `
-                    <div class="col-span-full p-8 text-center bg-white rounded-2xl border border-slate-200 shadow-sm">
-                        <div class="text-4xl mb-2">📚</div>
-                        <h4 class="font-bold text-slate-700 text-base">No Grade Levels Available</h4>
-                        <p class="text-slate-400 text-xs mt-1">Switch to Teacher mode to add your first grade level.</p>
-                    </div>
+            ['left', 'right'].forEach((side, idx) => {
+                const line = document.createElement('div');
+                line.className = 'whisker-line';
+                line.style.left = side === 'left' ? `${pMin}%` : `${pQ3}%`;
+                line.style.width = side === 'left' ? `${pQ1 - pMin}%` : `${pMax - pQ3}%`;
+                line.style.backgroundColor = color;
+                container.appendChild(line);
+            });
+
+            [pMin, pMax].forEach(pos => {
+                const mark = document.createElement('div');
+                mark.className = 'whisker-end';
+                mark.style.left = `${pos}%`;
+                mark.style.backgroundColor = color;
+                container.appendChild(mark);
+            });
+
+            const box = document.createElement('div');
+            box.className = 'box';
+            box.style.left = `${pQ1}%`;
+            box.style.width = `${pQ3 - pQ1}%`;
+            box.style.borderColor = color;
+            box.style.backgroundColor = bgColor;
+            container.appendChild(box);
+
+            const medianLine = document.createElement('div');
+            medianLine.className = 'median-line';
+            medianLine.style.left = `${pMed}%`;
+            container.appendChild(medianLine);
+            
+            data.forEach(val => {
+                const point = document.createElement('div');
+                point.className = 'data-point';
+                point.style.left = `${valToPercent(val, minV, maxV)}%`;
+                point.title = val;
+                if(isCustom) point.style.backgroundColor = '#047857'; 
+                container.appendChild(point);
+            });
+
+            if (isCustom) {
+                document.getElementById('custom-stats').innerHTML = `
+                    <span><b>Min:</b> ${stats.min}</span>
+                    <span><b>Q1:</b> ${stats.q1}</span>
+                    <span><b>Median:</b> ${stats.median}</span>
+                    <span><b>Q3:</b> ${stats.q3}</span>
+                    <span><b>Max:</b> ${stats.max}</span>
                 `;
+            }
+        }
+
+        function generateCustomPlot() {
+            const input = document.getElementById('custom-data').value;
+            const data = input.split(',').map(n => parseFloat(n.trim())).filter(n => !isNaN(n));
+            if (data.length < 3) { alert("Please provide at least 3 valid grades."); return; }
+            const stats = getQuartiles(data);
+            drawAxis('plot-custom', Math.min(stats.min - 5, 70), Math.max(stats.max + 5, 100), true);
+            drawBoxPlot('plot-custom', data, 'custom', Math.min(stats.min - 5, 70), Math.max(stats.max + 5, 100));
+        }
+
+        // Supabase Box Plot Actions
+        async function saveToSupabase() {
+            const name = document.getElementById('dataset-name').value.trim() || "Unnamed Student";
+            const grades = document.getElementById('custom-data').value.split(',').map(n => parseFloat(n.trim())).filter(n => !isNaN(n));
+            if (grades.length < 3) { alert("Provide at least 3 grades."); return; }
+
+            const { error } = await supabaseClient.from('box_plots').insert([{ name, grades }]);
+            if (error) alert("Error saving: " + error.message);
+            else { alert("Saved to Supabase successfully!"); fetchSavedDatasets(); }
+        }
+
+        async function fetchSavedDatasets() {
+            const { data } = await supabaseClient.from('box_plots').select('*').order('created_at', { ascending: false });
+            const select = document.getElementById('saved-datasets');
+            select.innerHTML = '<option value="">-- Load Saved Datasets from Supabase --</option>';
+            if (data) {
+                data.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = JSON.stringify(item.grades);
+                    opt.textContent = `${item.name} (${item.grades.join(', ')})`;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        function loadFromSupabaseSelection() {
+            const select = document.getElementById('saved-datasets');
+            if (!select.value) return;
+            document.getElementById('custom-data').value = JSON.parse(select.value).join(', ');
+            generateCustomPlot();
+        }
+
+        // --- NEW: Notes & Reminders from Supabase (Title + One-Line Description + Modal) ---
+        async function fetchNotes() {
+            const container = document.getElementById('notes-container');
+            // Safely querying a 'notes' table without altering existing tables
+            const { data, error } = await supabaseClient.from('notes').select('*').order('created_at', { ascending: false });
+            
+            if (error || !data || data.length === 0) {
+                // Fallback demo notes if table is not yet created in Supabase
+                renderNotes([
+                    { title: "Understanding Variance & Spread", description: "A quick summary of why standard deviation and box plots reveal hidden outliers.", content: "Full detailed notes:\n1. Averages can be deceptive when data points cluster unevenly.\n2. Look at Q1 and Q3 to identify middle spread.\n3. Always evaluate cutoff scores independently from means." },
+                    { title: "Honor Roll Criteria Reminder", description: "Important grade cutoffs and rules for semester qualification.", content: "Full reminder details:\n- Minimum grade threshold is strictly 80.\n- Any single grade below 79 disqualifies the applicant regardless of cumulative GPA.\n- Review all 8 subject scores before submission." }
+                ]);
                 return;
             }
-
-            gridEl.innerHTML = grades.map(g => `
-                <div onclick="selectGrade('${g.id}')" class="btn-press bg-white p-5 rounded-2xl cursor-pointer transition-all border border-slate-200/80 shadow-sm hover:shadow-md hover:border-indigo-300 flex justify-between items-center group">
-                    <div class="space-y-1">
-                        <span class="text-[10px] font-semibold px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full uppercase tracking-wider">Junior High</span>
-                        <h3 class="font-bold text-slate-800 text-lg group-hover:text-indigo-600 transition-colors">${escapeHtml(g.name)}</h3>
-                        <p class="text-xs text-slate-500">${escapeHtml(g.description || 'View notes, homework, & materials')}</p>
-                    </div>
-                    <div class="bg-indigo-50 group-hover:bg-indigo-600 group-hover:text-white text-indigo-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg transition-colors">
-                        ›
-                    </div>
-                </div>
-            `).join('');
+            renderNotes(data);
         }
 
-        function selectGrade(id) {
-            activeGradeId = id;
-            const grade = grades.find(g => g.id === id);
-            if (grade) {
-                document.getElementById('current-grade-title').textContent = grade.name;
-                
-                if (grade.teacherName || grade.teacherBio || grade.teacherPhoto) {
-                    document.getElementById('banner-teacher-name').textContent = grade.teacherName || 'Instructor';
-                    document.getElementById('banner-teacher-desc').textContent = grade.teacherBio || grade.description;
-                    if (grade.teacherPhoto) {
-                        document.getElementById('banner-teacher-photo').src = grade.teacherPhoto;
-                    }
-                    document.getElementById('teacher-profile-banner').classList.remove('hidden');
-                } else {
-                    document.getElementById('teacher-profile-banner').classList.add('hidden');
-                }
-            }
-
-            // Switch views
-            document.getElementById('view-dashboard').classList.add('hidden');
-            document.getElementById('view-grade-content').classList.remove('hidden');
-            document.getElementById('back-to-dashboard-btn').classList.remove('hidden');
-
-            if (currentMode === 'teacher') {
-                document.getElementById('teacher-actions').classList.remove('hidden');
-            }
-            loadContentsForGrade(id);
+        function renderNotes(notes) {
+            const container = document.getElementById('notes-container');
+            container.innerHTML = '';
+            notes.forEach(note => {
+                const card = document.createElement('div');
+                card.className = "p-4 bg-gray-50 border border-gray-200 rounded-lg hover:border-blue-400 cursor-pointer transition-all shadow-sm";
+                card.innerHTML = `
+                    <h3 class="font-bold text-lg text-blue-900">${escapeHtml(note.title)}</h3>
+                    <p class="text-sm text-gray-600 truncate mt-1">${escapeHtml(note.description || note.content)}</p>
+                `;
+                card.onclick = () => openModal(note.title, note.content);
+                container.appendChild(card);
+            });
         }
 
-        function deselectGrade() {
-            activeGradeId = null;
-            document.getElementById('view-grade-content').classList.add('hidden');
-            document.getElementById('back-to-dashboard-btn').classList.add('hidden');
-            document.getElementById('view-dashboard').classList.remove('hidden');
-            renderDashboardGrades();
+        function openModal(title, content) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerText = content;
+            document.getElementById('note-modal').classList.remove('hidden');
         }
 
-        function renderContents() {
-            const container = document.getElementById('content-container');
-            if (!activeGradeId) return;
+        function closeModal() {
+            document.getElementById('note-modal').classList.add('hidden');
+        }
 
-            if (!contents || contents.length === 0) {
+        // --- NEW: Documents / PDFs Viewer and Downloader ---
+        async function fetchDocuments() {
+            const container = document.getElementById('documents-container');
+            const { data, error } = await supabaseClient.from('documents').select('*').order('created_at', { ascending: false });
+
+            if (error || !data || data.length === 0) {
+                // Fallback sample document card if table isn't populated yet
                 container.innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-64 text-center">
-                        <div class="text-4xl mb-2">📂</div>
-                        <h4 class="font-bold text-slate-700">No content in this grade yet</h4>
-                        <p class="text-slate-400 text-sm mt-1">${currentMode === 'teacher' ? 'Click the action buttons above to add notes or materials!' : 'Your teacher has not published content here yet.'}</p>
+                    <div class="p-4 bg-purple-50 border border-purple-200 rounded-lg flex flex-col justify-between">
+                        <div>
+                            <h4 class="font-bold text-purple-900">Sample Study Guide.pdf</h4>
+                            <p class="text-xs text-purple-700 mt-1">PDF Document • Reference Material</p>
+                        </div>
+                        <div class="mt-4 flex gap-2">
+                            <a href="#" onclick="alert('Connect a Supabase Storage bucket URL to view/download files directly.')" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold py-2 px-3 rounded text-center flex-1">View PDF</a>
+                            <a href="#" onclick="alert('Connect a Supabase Storage bucket URL to view/download files directly.')" class="bg-white border border-purple-300 text-purple-700 hover:bg-purple-100 text-xs font-semibold py-2 px-3 rounded text-center">Download</a>
+                        </div>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto pb-12">
-                    ${contents.map(item => {
-                        let icon = '📝';
-                        let badgeColor = 'bg-amber-100 text-amber-700';
-                        let typeName = 'Note & Material';
-                        if (item.type === 'reminder') { icon = '⏰'; badgeColor = 'bg-rose-100 text-rose-700'; typeName = 'Reminder'; }
-                        if (item.type === 'link') { icon = '🔗'; badgeColor = 'bg-blue-100 text-blue-700'; typeName = 'External Link'; }
-
-                        return `
-                            <div class="bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
-                                <div>
-                                    ${item.photo ? `<div class="w-full h-36 bg-slate-100 overflow-hidden border-b border-slate-100"><img src="${item.photo}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover"></div>` : ''}
-                                    <div class="p-4 sm:p-5">
-                                        <div class="flex justify-between items-start gap-2 mb-2">
-                                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${badgeColor}">${icon} ${typeName}</span>${currentMode === 'teacher' ? `
-                                                <div class="flex items-center gap-2">
-                                                    <button onclick="editContent('${item.id}')" class="text-slate-400 hover:text-indigo-600 text-xs font-semibold">✏️ Edit</button>
-                                                    <button onclick="deleteContent('${item.id}')" class="text-slate-300 hover:text-red-500 text-xs">🗑️</button>
-                                                </div>
-                                            ` : ''}
-                                        </div>
-                                        <h3 class="font-bold text-slate-800 text-base sm:text-lg mb-2">${escapeHtml(item.title)}</h3>${item.type === 'note' ? `
-                                            <div class="space-y-3">
-                                                ${item.body ? `<p class="text-slate-600 text-sm whitespace-pre-line bg-slate-50 p-3 rounded-xl border border-slate-100">${escapeHtml(item.body)}</p>` : ''}
-                                                
-                                                ${item.fileData ? `
-                                                    <div class="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
-                                                        ${item.fileType && item.fileType.includes('image') ? `<img src="${item.fileData}" class="max-h-40 rounded-lg mx-auto mb-2">` : ''}
-                                                        ${item.fileType && item.fileType.includes('pdf') ? `<iframe src="${item.fileData}" class="w-full h-40 rounded border border-indigo-200"></iframe>` : ''}
-                                                        <div class="mt-2 text-center">
-                                                            <a href="${item.fileData}" download="learning-material" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-medium inline-block">📥 Download File</a>
-                                                        </div>
-                                                    </div>
-                                                ` : ''}
-
-                                                ${item.customHtml ? `
-                                                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl overflow-x-auto">
-                                                        ${item.customHtml}
-                                                    </div>
-                                                ` : ''}
-                                            </div>
-                                        ` : ''}
-
-                                        ${item.type === 'reminder' ? `
-                                            <div class="bg-rose-50 border border-rose-100 p-3.5 rounded-xl space-y-1">
-                                                <p class="text-xs font-bold text-rose-700 flex items-center gap-1">📅 Due: ${item.dueDate ? new Date(item.dueDate).toLocaleString() : 'No date specified'}</p>
-                                                <p class="text-slate-700 text-sm whitespace-pre-line">${escapeHtml(item.body || '')}</p>
-                                            </div>
-                                        ` : ''}
-
-                                        ${item.type === 'link' ? `
-                                            <div class="space-y-2">
-                                                <p class="text-slate-600 text-sm">${escapeHtml(item.description || '')}</p>
-                                                <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline text-sm font-medium break-all flex items-center gap-1">🌐 Open Link ↗</a>
-                                            </div>
-                                        ` : ''}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
-        }
-
-        function openAddGradeModal() {
-            document.getElementById('modal-container').classList.remove('hidden');
-            document.getElementById('modal-add-grade').classList.remove('hidden');
-            document.getElementById('input-grade-name').value = '';
-            document.getElementById('input-grade-desc').value = '';
-            document.getElementById('input-grade-teacher-name').value = '';
-            document.getElementById('input-grade-teacher-desc').value = '';
-            document.getElementById('input-grade-teacher-photo-base64').value = '';
-        }
-
-        function openEditGradeProfileModal() {
-            const grade = grades.find(g => g.id === activeGradeId);
-            if (!grade) return;
-            document.getElementById('modal-container').classList.remove('hidden');
-            document.getElementById('modal-edit-grade-profile').classList.remove('hidden');
-            document.getElementById('edit-teacher-name').value = grade.teacherName || '';
-            document.getElementById('edit-teacher-desc').value = grade.teacherBio || '';
-            document.getElementById('edit-teacher-photo-base64').value = grade.teacherPhoto || '';
-        }
-
-        async function saveTeacherProfile() {
-            const grade = grades.find(g => g.id === activeGradeId);
-            if (!grade) return;
-            grade.teacherName = document.getElementById('edit-teacher-name').value.trim();
-            grade.teacherBio = document.getElementById('edit-teacher-desc').value.trim();
-            const photoB64 = document.getElementById('edit-teacher-photo-base64').value;
-            if (photoB64) grade.teacherPhoto = photoB64;
-
-            if (isSupabaseConnected && supabaseClient) {
-                try {
-                    await supabaseClient.from('grades').update(grade).eq('id', activeGradeId);
-                } catch (e) {
-                    console.error("Profile update error:", e);
-                }
-            }
-
-            localStorage.setItem('math_grades_v3', JSON.stringify(grades));
-            closeModals();
-            selectGrade(activeGradeId);
-        }
-
-        function openAddContentModal(type) {
-            if (!activeGradeId) { alert("Please select a grade level first."); return; }
-            currentContentType = type;
-            document.getElementById('modal-container').classList.remove('hidden');
-            document.getElementById('modal-add-content').classList.remove('hidden');
-            document.getElementById('input-edit-id').value = '';
-            
-            document.getElementById('field-container-note').classList.add('hidden');
-            document.getElementById('field-container-reminder').classList.add('hidden');
-            document.getElementById('field-container-link').classList.add('hidden');
-
-            const titleEl = document.getElementById('content-modal-title');
-            if (type === 'note') {
-                titleEl.textContent = "Add Lesson Note & Material";
-                document.getElementById('field-container-note').classList.remove('hidden');
-            } else if (type === 'reminder') {
-                titleEl.textContent = "Add Reminder";
-                document.getElementById('field-container-reminder').classList.remove('hidden');
-            } else if (type === 'link') {
-                titleEl.textContent = "Add Link with Preview Photo";
-                document.getElementById('field-container-link').classList.remove('hidden');
-            }
-            
-            document.getElementById('input-content-title').value = '';
-            document.getElementById('input-content-body').value = '';
-            document.getElementById('input-material-file-data').value = '';
-            document.getElementById('input-material-file-type').value = '';
-            document.getElementById('material-file-name').classList.add('hidden');
-            document.getElementById('input-custom-html').value = '';
-            document.getElementById('input-reminder-date').value = '';
-            document.getElementById('input-reminder-body').value = '';
-            document.getElementById('input-content-url').value = '';
-            document.getElementById('input-link-desc').value = '';
-            document.getElementById('input-photo-file').value = '';
-            document.getElementById('input-photo-base64').value = '';
-            document.getElementById('photo-preview-container').classList.add('hidden');
-        }
-
-        function editContent(id) {
-            const item = contents.find(c => c.id === id);
-            if (!item) return;
-
-            openAddContentModal(item.type);
-            document.getElementById('input-edit-id').value = item.id;
-            document.getElementById('content-modal-title').textContent = "Edit Content Item";
-            document.getElementById('input-content-title').value = item.title || '';
-
-            if (item.type === 'note') {
-                document.getElementById('input-content-body').value = item.body || '';
-                document.getElementById('input-material-file-data').value = item.fileData || '';
-                document.getElementById('input-material-file-type').value = item.fileType || '';
-                document.getElementById('input-custom-html').value = item.customHtml || '';
-            } else if (item.type === 'reminder') {
-                document.getElementById('input-reminder-date').value = item.dueDate || '';
-                document.getElementById('input-reminder-body').value = item.body || '';
-            } else if (item.type === 'link') {
-                document.getElementById('input-content-url').value = item.url || '';
-                document.getElementById('input-link-desc').value = item.description || '';
-                if (item.photo) {
-                    document.getElementById('input-photo-base64').value = item.photo;
-                    document.getElementById('photo-preview-img').src = item.photo;
-                    document.getElementById('photo-preview-container').classList.remove('hidden');
-                }
-            }
-        }
-
-        function closeModals() {
-            document.getElementById('modal-container').classList.add('hidden');
-            document.getElementById('modal-teacher-auth').classList.add('hidden');
-            document.getElementById('modal-add-grade').classList.add('hidden');
-            document.getElementById('modal-edit-grade-profile').classList.add('hidden');
-            document.getElementById('modal-add-content').classList.add('hidden');
-        }
-
-        async function saveNewGrade() {
-            const name = document.getElementById('input-grade-name').value.trim();
-            const desc = document.getElementById('input-grade-desc').value.trim();
-            const teacherName = document.getElementById('input-grade-teacher-name').value.trim();
-            const teacherBio = document.getElementById('input-grade-teacher-desc').value.trim();
-            const teacherPhoto = document.getElementById('input-grade-teacher-photo-base64').value.trim();
-
-            if (!name) { alert("Please enter a grade name."); return; }
-
-            const newGrade = {
-                id: 'grade-' + Date.now(),
-                name: name,
-                description: desc,
-                teacherName: teacherName || 'Instructor',
-                teacherBio: teacherBio || desc,
-                teacherPhoto: teacherPhoto || 'https://placehold.co/150/4f46e5/ffffff?text=TC'
-            };
-
-            if (isSupabaseConnected && supabaseClient) {
-                try {
-                    await supabaseClient.from('grades').insert([newGrade]);
-                } catch (e) {
-                    console.error("Grade insert error:", e);
-                }
-            }
-
-            grades.push(newGrade);
-            localStorage.setItem('math_grades_v3', JSON.stringify(grades));
-            closeModals();
-            selectGrade(newGrade.id);
-        }
-
-        async function deleteActiveGrade() {
-            if (!confirm("Are you sure you want to delete this entire grade level?")) return;
-            const id = activeGradeId;
-            if (isSupabaseConnected && supabaseClient) {
-                try {
-                    await supabaseClient.from('grades').delete().eq('id', id);
-                } catch (e) {
-                    console.error("Grade delete error:", e);
-                }
-            }
-            grades = grades.filter(g => g.id !== id);
-            localStorage.setItem('math_grades_v3', JSON.stringify(grades));
-            deselectGrade();
-            loadGrades();
-        }
-
-        async function saveNewContent() {
-            const title = document.getElementById('input-content-title').value.trim();
-            const editId = document.getElementById('input-edit-id').value;
-            if (!title) { alert("Please enter a title."); return; }
-
-            const photoBase64 = document.getElementById('input-photo-base64').value;
-            const existingItem = editId ? contents.find(c => c.id === editId) : null;
-
-            let updatedItem = {
-                id: editId || ('c-' + Date.now()),
-                grade_id: activeGradeId,
-                type: currentContentType,
-                title: title,
-                body: currentContentType === 'note' ? document.getElementById('input-content-body').value : (currentContentType === 'reminder' ? document.getElementById('input-reminder-body').value : ''),
-                fileData: currentContentType === 'note' ? document.getElementById('input-material-file-data').value || (existingItem ? existingItem.fileData : '') : '',
-                fileType: currentContentType === 'note' ? document.getElementById('input-material-file-type').value || (existingItem ? existingItem.fileType : '') : '',
-                customHtml: currentContentType === 'note' ? document.getElementById('input-custom-html').value : '',
-                dueDate: currentContentType === 'reminder' ? document.getElementById('input-reminder-date').value : '',
-                url: currentContentType === 'link' ? document.getElementById('input-content-url').value : '',
-                description: currentContentType === 'link' ? document.getElementById('input-link-desc').value : '',
-                photo: photoBase64 || (existingItem ? existingItem.photo : '')
-            };
-
-            if (isSupabaseConnected && supabaseClient) {
-                try {
-                    if (editId) {
-                        await supabaseClient.from('contents').update(updatedItem).eq('id', editId);
-                    } else {
-                        await supabaseClient.from('contents').insert([updatedItem]);
-                    }
-                } catch (e) {
-                    console.error("Content save error:", e);
-                }
-            }
-
-            if (editId) {
-                contents = contents.map(c => c.id === editId ? updatedItem : c);
-            } else {
-                contents.push(updatedItem);
-            }
-
-            localStorage.setItem('math_contents_v3_' + activeGradeId, JSON.stringify(contents));
-            closeModals();
-            renderContents();
-        }
-
-        async function deleteContent(id) {
-            if (!confirm("Delete this content item?")) return;
-            if (isSupabaseConnected && supabaseClient) {
-                try {
-                    await supabaseClient.from('contents').delete().eq('id', id);
-                } catch (e) {
-                    console.error("Content delete error:", e);
-                }
-            }
-            contents = contents.filter(c => c.id !== id);
-            localStorage.setItem('math_contents_v3_' + activeGradeId, JSON.stringify(contents));
-            renderContents();
-        }
-
-        function handleTeacherPhotoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) { document.getElementById('input-grade-teacher-photo-base64').value = e.target.result; }
-            reader.readAsDataURL(file);
-        }
-
-        function handleEditTeacherPhotoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) { document.getElementById('edit-teacher-photo-base64').value = e.target.result; }
-            reader.readAsDataURL(file);
-        }
-
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 400;
-                    const MAX_HEIGHT = 300;
-                    let width = img.width;
-                    let height = img.height;
-                    if (width > height) {
-                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                    } else {
-                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                    document.getElementById('input-photo-base64').value = compressedDataUrl;
-                    document.getElementById('photo-preview-img').src = compressedDataUrl;
-                    document.getElementById('photo-preview-container').classList.remove('hidden');
-                }
-                img.src = e.target.result;
-            }
-            reader.readAsDataURL(file);
-        }
-
-        function handleMaterialFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('input-material-file-data').value = e.target.result;
-                document.getElementById('input-material-file-type').value = file.type;
-                document.getElementById('material-file-name').textContent = "Attached: " + file.name;
-                document.getElementById('material-file-name').classList.remove('hidden');
-            }
-            reader.readAsDataURL(file);
+            container.innerHTML = '';
+            data.forEach(doc => {
+                const card = document.createElement('div');
+                card.className = "p-4 bg-purple-50 border border-purple-200 rounded-lg flex flex-col justify-between";
+                card.innerHTML = `
+                    <div>
+                        <h4 class="font-bold text-purple-900">${escapeHtml(doc.title)}</h4>
+                        <p class="text-xs text-purple-700 mt-1">${escapeHtml(doc.file_type || 'Document')} • Uploaded File</p>
+                    </div>
+                    <div class="mt-4 flex gap-2">
+                        <a href="${doc.file_url}" target="_blank" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold py-2 px-3 rounded text-center flex-1">View / Preview</a>
+                        <a href="${doc.file_url}" download class="bg-white border border-purple-300 text-purple-700 hover:bg-purple-100 text-xs font-semibold py-2 px-3 rounded text-center">Download</a>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
         }
 
         function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            return str ? str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
         }
+
+        window.onload = function() {
+            drawAxis('plot-student1', minVal, maxVal, true);
+            drawBoxPlot('plot-student1', student1Data, 'student1', minVal, maxVal);
+
+            drawAxis('plot-student2', minVal, maxVal, true);
+            drawBoxPlot('plot-student2', student2Data, 'student2', minVal, maxVal);
+
+            generateCustomPlot();
+            fetchSavedDatasets();
+            fetchNotes();
+            fetchDocuments();
+        };
     </script>
 </body>
 </html>
