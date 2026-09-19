@@ -59,17 +59,17 @@
                 <div class="bg-white/10 p-2 rounded-xl text-2xl">📐</div>
                 <div>
                     <h1 class="text-xl sm:text-2xl font-bold tracking-tight">MathConnect Junior High</h1>
-                    <p class="text-xs text-indigo-200 hidden sm:block">Interactive Teacher Dashboard & Student Hub</p>
+                    <p id="portal-subtitle" class="text-xs text-indigo-200 hidden sm:block">Student Portal - Read Only View</p>
                 </div>
             </div>
             
             <div class="flex items-center gap-2">
                 <!-- Mode Switcher -->
                 <div class="bg-indigo-900/40 p-1 rounded-xl flex items-center border border-indigo-400/30">
-                    <button onclick="requestTeacherMode()" id="btn-mode-teacher" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-indigo-700 shadow-sm">
+                    <button onclick="requestTeacherMode()" id="btn-mode-teacher" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-indigo-100 hover:text-white">
                         👨‍🏫 Teacher Mode
                     </button>
-                    <button onclick="switchMode('student')" id="btn-mode-student" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-indigo-100 hover:text-white">
+                    <button onclick="switchMode('student')" id="btn-mode-student" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-indigo-700 shadow-sm">
                         🎓 Student Portal
                     </button>
                 </div>
@@ -80,12 +80,12 @@
         <main class="flex-1 overflow-hidden flex flex-col md:flex-row relative">
             
             <!-- Sidebar: Grade Levels -->
-            <aside class="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col z-10 shadow-sm">
+            <aside id="sidebar-container" class="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col z-10 shadow-sm">
                 <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <h2 class="font-bold text-slate-700 text-sm uppercase tracking-wider flex items-center gap-2">
-                        <span>📚</span> Grade Levels
+                        <span>📚</span> <span id="sidebar-header-title">Grade Levels</span>
                     </h2>
-                    <button onclick="openAddGradeModal()" id="teacher-add-grade-btn" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-1">
+                    <button onclick="openAddGradeModal()" id="teacher-add-grade-btn" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-1 hidden">
                         ➕ Add Grade
                     </button>
                 </div>
@@ -116,8 +116,11 @@
                     
                     <!-- Teacher Quick Actions -->
                     <div id="teacher-actions" class="flex items-center gap-2 hidden flex-wrap">
+                        <button onclick="openTeacherProfileModal()" class="btn-press bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-1.5">
+                            👩‍🏫 Edit Teacher Profile
+                        </button>
                         <button onclick="openAddContentModal('note')" class="btn-press bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-1.5">
-                            📝 Add Note
+                            📝 Add Note/PDF/HTML
                         </button>
                         <button onclick="openAddContentModal('reminder')" class="btn-press bg-rose-500 hover:bg-rose-600 text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-1.5">
                             ⏰ Add Reminder
@@ -128,12 +131,12 @@
                     </div>
                 </div>
 
-                <!-- Content Feed Grid -->
-                <div class="flex-1 overflow-y-auto p-4 sm:p-6" id="content-container">
+                <!-- Content Feed Grid & Teacher Profile Banner -->
+                <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6" id="content-container">
                     <div class="flex flex-col items-center justify-center h-64 text-center">
                         <div class="text-5xl mb-3">👈</div>
                         <h3 class="text-lg font-bold text-slate-700">Choose a grade level from the sidebar</h3>
-                        <p class="text-slate-500 text-sm max-w-sm mt-1">Select or create a grade level to view notes, reminders, and links with preview photos.</p>
+                        <p class="text-slate-500 text-sm max-w-sm mt-1">Select a grade level to view teacher information, notes, reminders, and learning materials.</p>
                     </div>
                 </div>
 
@@ -150,7 +153,7 @@
                 <button onclick="closeModals()" class="text-indigo-200 hover:text-white text-xl font-bold">✕</button>
             </div>
             <div class="p-6 space-y-4">
-                <p class="text-xs text-slate-500">Please enter the teacher access password to manage content and grade levels.</p>
+                <p class="text-xs text-slate-500">Please enter the teacher access password ('121488') to unlock management and editing features.</p>
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Password</label>
                     <input type="password" id="input-teacher-password" placeholder="Enter password..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500" onkeydown="if(event.key==='Enter') verifyTeacherPassword()">
@@ -184,6 +187,37 @@
             </div>
         </div>
 
+        <!-- Teacher Profile Edit Modal -->
+        <div id="modal-teacher-profile" class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden hidden transform transition-all max-h-[90vh] flex flex-col">
+            <div class="bg-indigo-600 text-white p-5 flex justify-between items-center">
+                <h3 class="text-xl font-bold">Edit Teacher Profile for Grade</h3>
+                <button onclick="closeModals()" class="text-indigo-200 hover:text-white text-xl font-bold">✕</button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto flex-1">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Teacher Name</label>
+                    <input type="text" id="input-prof-name" placeholder="e.g., Mr. John Doe" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Bio / Description & Office Hours</label>
+                    <textarea id="input-prof-desc" rows="3" placeholder="e.g., Math Department Chair. Room 304. Office Hours: Mon-Fri 3-4 PM" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Teacher Photo</label>
+                    <input type="file" id="input-prof-photo-file" accept="image/*" onchange="handleTeacherPhotoUpload(event)" class="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                    <input type="hidden" id="input-prof-photo-base64">
+                    <div id="prof-photo-preview-container" class="mt-3 hidden">
+                        <p class="text-xs text-slate-400 mb-1">Current Photo Preview:</p>
+                        <img id="prof-photo-preview-img" src="" alt="Teacher Preview" class="h-24 w-24 rounded-full object-cover border border-slate-200 shadow-sm">
+                    </div>
+                </div>
+                <div class="pt-2 flex justify-end gap-3 border-t border-slate-100">
+                    <button onclick="closeModals()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium">Cancel</button>
+                    <button onclick="saveTeacherProfile()" class="btn-press px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-md">Save Profile</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Add/Edit Content Modal -->
         <div id="modal-add-content" class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden hidden transform transition-all max-h-[90vh] flex flex-col">
             <div id="content-modal-header" class="bg-indigo-600 text-white p-5 flex justify-between items-center">
@@ -197,10 +231,47 @@
                     <input type="text" id="input-content-title" placeholder="e.g., Chapter 1 Review Material" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
                 </div>
                 
-                <!-- Note Field Group -->
-                <div id="field-container-note" class="content-field-group">
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Note Content / Explanation</label>
-                    <textarea id="input-content-body" rows="5" placeholder="Write lesson notes, formulas, or instructions here..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 font-sans text-sm"></textarea>
+                <!-- Note Field Group (Enhanced with format selection) -->
+                <div id="field-container-note" class="content-field-group space-y-3">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Material Format Type</label>
+                        <select id="input-note-format" onchange="toggleNoteFormatFields()" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 bg-white text-sm">
+                            <option value="text">Standard Text / Markdown Notes</option>
+                            <option value="pdf">PDF Document (Upload)</option>
+                            <option value="image">Photo / Image Material (Upload)</option>
+                            <option value="html">Raw HTML Snippet / Interactive Widget</option>
+                        </select>
+                    </div>
+
+                    <!-- Text Subtype -->
+                    <div id="subfield-text" class="note-subfield">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Note Content / Explanation</label>
+                        <textarea id="input-content-body" rows="5" placeholder="Write lesson notes, formulas, or instructions here..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 font-sans text-sm"></textarea>
+                    </div>
+
+                    <!-- PDF Subtype -->
+                    <div id="subfield-pdf" class="note-subfield hidden space-y-2">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Upload PDF File</label>
+                        <input type="file" id="input-pdf-file" accept="application/pdf" onchange="handlePdfUpload(event)" class="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                        <input type="hidden" id="input-pdf-base64">
+                        <p id="pdf-file-name" class="text-xs text-emerald-600 font-medium hidden">PDF attached successfully.</p>
+                    </div>
+
+                    <!-- Image Subtype -->
+                    <div id="subfield-image" class="note-subfield hidden space-y-2">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Upload Note Photo / Diagram</label>
+                        <input type="file" id="input-note-photo-file" accept="image/*" onchange="handleNotePhotoUpload(event)" class="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                        <input type="hidden" id="input-note-photo-base64">
+                        <div id="note-photo-preview-container" class="mt-2 hidden">
+                            <img id="note-photo-preview-img" src="" alt="Note Preview" class="h-32 w-auto rounded-xl object-cover border border-slate-200">
+                        </div>
+                    </div>
+
+                    <!-- HTML Subtype -->
+                    <div id="subfield-html" class="note-subfield hidden space-y-2">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Raw HTML Code / Interactive Widget</label>
+                        <textarea id="input-html-body" rows="5" placeholder="&lt;div class='p-4 bg-indigo-50 rounded-xl'&gt;Custom HTML Content&lt;/div&gt;" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs"></textarea>
+                    </div>
                 </div>
 
                 <!-- Reminder Field Group -->
@@ -218,8 +289,8 @@
                 <!-- Link & Photo Field Group -->
                 <div id="field-container-link" class="content-field-group hidden space-y-4">
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">External Website URL</label>
-                        <input type="url" id="input-content-url" placeholder="https://www.khanacademy.org/..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">External Website URL (Google, YouTube, etc.)</label>
+                        <input type="url" id="input-content-url" placeholder="https://www.youtube.com/watch?v=..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Details / Description</label>
@@ -250,7 +321,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
-        // --- STREAMING_CHUNK:Supabase configuration and initialization ---
         const SUPABASE_URL = 'https://lpheculpaxwakrqshgmf.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_xo9Ju3gxXbhpImWPTfaicA_-ay4Fua-';
 
@@ -267,34 +337,45 @@
             console.warn("Supabase initialization notice:", err);
         }
 
-        // --- APPLICATION STATE ---
-        let currentMode = 'teacher';
+        let currentMode = 'student'; // Defaults to student view upon link opening
         let grades = [];
         let activeGradeId = null;
         let contents = [];
         let currentContentType = 'note';
 
         const defaultGrades = [
-            { id: 'grade-7', name: '7th Grade Math', description: 'Integers, Ratios & Basic Algebra' },
-            { id: 'grade-8', name: '8th Grade Math', description: 'Linear Equations & Geometry' }
+            { 
+                id: 'grade-7', 
+                name: '7th Grade Math', 
+                description: 'Integers, Ratios & Basic Algebra',
+                teacherName: 'Prof. Sarah Jenkins',
+                teacherDesc: 'Math Department Chair. Room 204. Office Hours: Tue/Thu 3:00 - 4:30 PM',
+                teacherPhoto: 'https://placehold.co/200x200/4f46e5/ffffff?text=SJ'
+            },
+            { 
+                id: 'grade-8', 
+                name: '8th Grade Math', 
+                description: 'Linear Equations & Geometry',
+                teacherName: 'Mr. David Miller',
+                teacherDesc: 'Algebra Lead Instructor. Room 310. Office Hours: Mon/Wed 2:30 - 4:00 PM',
+                teacherPhoto: 'https://placehold.co/200x200/0ea5e9/ffffff?text=DM'
+            }
         ];
 
         const defaultContents = {
             'grade-7': [
-                { id: 'c1', grade_id: 'grade-7', type: 'note', title: 'Integer Rules Cheat Sheet', body: '• Adding Same Signs: Add numbers and keep the sign.\n• Adding Different Signs: Subtract smaller from larger and take the sign of the larger number.' },
+                { id: 'c1', grade_id: 'grade-7', type: 'note', noteFormat: 'text', title: 'Integer Rules Cheat Sheet', body: '• Adding Same Signs: Add numbers and keep the sign.\n• Adding Different Signs: Subtract smaller from larger and take the sign of the larger number.' },
                 { id: 'c2', grade_id: 'grade-7', type: 'reminder', title: 'Quiz on Ratios Next Tuesday!', dueDate: '2026-06-15T10:00', body: 'Please review textbook chapters 2.1 to 2.4 before class.' },
                 { id: 'c3', grade_id: 'grade-7', type: 'link', title: 'Khan Academy 7th Grade Ratios', url: 'https://www.khanacademy.org/math/cc-7th-grade-math', description: 'Interactive exercises and tutorial videos on proportional relationships.', photo: 'https://placehold.co/600x300/4f46e5/ffffff?text=Khan+Academy' }
             ]
         };
 
-        // --- INIT ON LOAD ---
         window.onload = async function() {
             await loadGrades();
             updateModeUI();
             testSupabaseConnection();
         };
 
-        // --- STREAMING_CHUNK:Password protected teacher mode logic ---
         function requestTeacherMode() {
             if (currentMode === 'teacher') return;
             document.getElementById('modal-container').classList.remove('hidden');
@@ -309,7 +390,7 @@
                 closeModals();
                 switchMode('teacher');
             } else {
-                alert("Incorrect password. Access denied.");
+                showNotification("Incorrect password. Access denied.", "error");
                 document.getElementById('input-teacher-password').value = '';
             }
         }
@@ -320,17 +401,23 @@
             const btnStudent = document.getElementById('btn-mode-student');
             const teacherAddBtn = document.getElementById('teacher-add-grade-btn');
             const teacherActions = document.getElementById('teacher-actions');
+            const subtitleEl = document.getElementById('portal-subtitle');
+            const sidebarHeaderTitle = document.getElementById('sidebar-header-title');
 
             if (mode === 'teacher') {
                 btnTeacher.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-indigo-700 shadow-sm";
                 btnStudent.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-indigo-100 hover:text-white";
                 teacherAddBtn.classList.remove('hidden');
                 if(activeGradeId) teacherActions.classList.remove('hidden');
+                subtitleEl.textContent = "Teacher Management Dashboard";
+                sidebarHeaderTitle.textContent = "Grade Levels (Admin)";
             } else {
                 btnStudent.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-indigo-700 shadow-sm";
                 btnTeacher.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-indigo-100 hover:text-white";
                 teacherAddBtn.classList.add('hidden');
                 teacherActions.classList.add('hidden');
+                subtitleEl.textContent = "Student Portal - Read Only View";
+                sidebarHeaderTitle.textContent = "Grade Levels";
             }
             renderGrades();
             if (activeGradeId) renderContents();
@@ -340,7 +427,6 @@
             switchMode(currentMode);
         }
 
-        // --- STREAMING_CHUNK:Supabase database storage sync ---
         async function testSupabaseConnection() {
             const statusEl = document.getElementById('sync-status');
             if (!isSupabaseConnected || !supabaseClient) {
@@ -372,7 +458,7 @@
                 } catch (e) {}
             }
             
-            const savedGrades = localStorage.getItem('math_grades_v2');
+            const savedGrades = localStorage.getItem('math_grades_v3');
             grades = savedGrades ? JSON.parse(savedGrades) : defaultGrades;
             if (!activeGradeId && grades.length > 0) selectGrade(grades[0].id);
             renderGrades();
@@ -391,35 +477,42 @@
             }
             
             if (!defaultContents[gradeId]) defaultContents[gradeId] = [];
-            const savedContents = localStorage.getItem('math_contents_v2_' + gradeId);
+            const savedContents = localStorage.getItem('math_contents_v3_' + gradeId);
             contents = savedContents ? JSON.parse(savedContents) : defaultContents[gradeId];
             renderContents();
         }
 
-        // --- STREAMING_CHUNK:Image compression utility function ---
         function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+            processImageFile(event.target.files[0], 'input-photo-base64', 'photo-preview-img', 'photo-preview-container', 400, 300);
+        }
 
+        function handleTeacherPhotoUpload(event) {
+            processImageFile(event.target.files[0], 'input-prof-photo-base64', 'prof-photo-preview-img', 'prof-photo-preview-container', 200, 200);
+        }
+
+        function handleNotePhotoUpload(event) {
+            processImageFile(event.target.files[0], 'input-note-photo-base64', 'note-photo-preview-img', 'note-photo-preview-container', 500, 400);
+        }
+
+        function processImageFile(file, base64InputId, imgPreviewId, containerId, maxWidth, maxHeight) {
+            if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 400;
-                    const MAX_HEIGHT = 300;
                     let width = img.width;
                     let height = img.height;
 
                     if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
+                        if (width > maxWidth) {
+                            height *= maxWidth / width;
+                            width = maxWidth;
                         }
                     } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
+                        if (height > maxHeight) {
+                            width *= maxHeight / height;
+                            height = maxHeight;
                         }
                     }
 
@@ -428,20 +521,40 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // Compress to JPEG with 0.7 quality for lower resolution
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                    document.getElementById('input-photo-base64').value = compressedDataUrl;
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+                    document.getElementById(base64InputId).value = compressedDataUrl;
                     
-                    const previewImg = document.getElementById('photo-preview-img');
+                    const previewImg = document.getElementById(imgPreviewId);
                     previewImg.src = compressedDataUrl;
-                    document.getElementById('photo-preview-container').classList.remove('hidden');
+                    document.getElementById(containerId).classList.remove('hidden');
                 }
                 img.src = e.target.result;
             }
             reader.readAsDataURL(file);
         }
 
-        // --- RENDERING UI ---
+        function handlePdfUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('input-pdf-base64').value = e.target.result;
+                const nameEl = document.getElementById('pdf-file-name');
+                nameEl.textContent = `Attached: ${file.name} (${Math.round(file.size/1024)} KB)`;
+                nameEl.classList.remove('hidden');
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function toggleNoteFormatFields() {
+            const format = document.getElementById('input-note-format').value;
+            document.querySelectorAll('.note-subfield').forEach(el => el.classList.add('hidden'));
+            if (format === 'text') document.getElementById('subfield-text').classList.remove('hidden');
+            if (format === 'pdf') document.getElementById('subfield-pdf').classList.remove('hidden');
+            if (format === 'image') document.getElementById('subfield-image').classList.remove('hidden');
+            if (format === 'html') document.getElementById('subfield-html').classList.remove('hidden');
+        }
+
         function renderGrades() {
             const listEl = document.getElementById('grade-list');
             if (!grades || grades.length === 0) {
@@ -449,15 +562,18 @@
                 return;
             }
 
+            // In student view (especially on mobile), display clean grade level names/buttons
             listEl.innerHTML = grades.map(g => `
                 <div onclick="selectGrade('${g.id}')" class="p-3.5 rounded-2xl cursor-pointer transition-all border ${activeGradeId === g.id ? 'bg-indigo-50 border-indigo-300 shadow-sm' : 'bg-white border-slate-100 hover:bg-slate-50'} flex justify-between items-center group">
-                    <div>
-                        <h4 class="font-bold text-slate-800 text-sm">${escapeHtml(g.name)}</h4>
-                        <p class="text-xs text-slate-500 truncate max-w-[180px]">${escapeHtml(g.description || '')}</p>
+                    <div class="overflow-hidden">
+                        <h4 class="font-bold text-slate-800 text-sm sm:text-base">${escapeHtml(g.name)}</h4>
+                        ${currentMode === 'teacher' ? `<p class="text-xs text-slate-500 truncate max-w-[180px]">${escapeHtml(g.description || '')}</p>` : ''}
                     </div>
                     ${currentMode === 'teacher' ? `
-                        <button onclick="event.stopPropagation(); deleteGrade('${g.id}')" class="text-slate-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity">🗑️</button>
-                    ` : '<span class="text-indigo-400 font-bold">›</span>'}
+                        <div class="flex items-center gap-1">
+                            <button onclick="event.stopPropagation(); deleteGrade('${g.id}')" class="text-slate-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity">🗑️</button>
+                        </div>
+                    ` : '<span class="text-indigo-500 font-bold text-lg">›</span>'}
                 </div>
             `).join('');
         }
@@ -475,30 +591,57 @@
             loadContentsForGrade(id);
         }
 
-        // --- STREAMING_CHUNK:Rendering content cards for notes, reminders, and links ---
         function renderContents() {
             const container = document.getElementById('content-container');
             if (!activeGradeId) return;
 
+            const grade = grades.find(g => g.id === activeGradeId);
+            let teacherProfileHTML = '';
+
+            if (grade) {
+                const tName = grade.teacherName || 'Assigned Teacher';
+                const tDesc = grade.teacherDesc || 'Junior High Mathematics Instructor';
+                const tPhoto = grade.teacherPhoto || 'https://placehold.co/150x150/4f46e5/ffffff?text=Teacher';
+
+                teacherProfileHTML = `
+                    <div class="bg-gradient-to-r from-indigo-900 to-indigo-800 text-white rounded-3xl p-6 shadow-md flex flex-col sm:flex-row items-center gap-5 max-w-5xl mx-auto w-full">
+                        <img src="${tPhoto}" alt="${escapeHtml(tName)}" class="w-24 h-24 rounded-full object-cover border-4 border-white/20 shadow-lg flex-shrink-0">
+                        <div class="flex-1 text-center sm:text-left">
+                            <span class="text-xs font-semibold px-2.5 py-0.5 bg-indigo-700/80 text-indigo-200 rounded-full uppercase tracking-wider">Faculty Profile</span>
+                            <h3 class="text-xl font-bold mt-1">${escapeHtml(tName)}</h3>
+                            <p class="text-indigo-200 text-sm mt-1 whitespace-pre-line">${escapeHtml(tDesc)}</p>
+                        </div>
+                        ${currentMode === 'teacher' ? `
+                            <button onclick="openTeacherProfileModal()" class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all border border-white/20">Edit Profile</button>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
             if (!contents || contents.length === 0) {
                 container.innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-64 text-center">
+                    ${teacherProfileHTML}
+                    <div class="flex flex-col items-center justify-center h-48 text-center bg-white rounded-3xl border border-slate-200 p-8 max-w-5xl mx-auto">
                         <div class="text-4xl mb-2">📂</div>
-                        <h4 class="font-bold text-slate-700">No content in this grade yet</h4>
-                        <p class="text-slate-400 text-sm mt-1">${currentMode === 'teacher' ? 'Click the buttons above to add notes, reminders, or links!' : 'Your teacher has not published content here yet.'}</p>
+                        <h4 class="font-bold text-slate-700">No learning materials in this grade yet</h4>
+                        <p class="text-slate-400 text-sm mt-1">${currentMode === 'teacher' ? 'Click the buttons above to add notes, PDFs, links, or reminders!' : 'Your teacher has not published materials here yet.'}</p>
                     </div>
                 `;
                 return;
             }
 
             container.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
+                ${teacherProfileHTML}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto w-full">
                     ${contents.map(item => {
                         let icon = '📝';
                         let badgeColor = 'bg-amber-100 text-amber-700';
-                        let typeName = 'Note';
+                        let typeName = 'Note / Material';
                         if (item.type === 'reminder') { icon = '⏰'; badgeColor = 'bg-rose-100 text-rose-700'; typeName = 'Reminder'; }
-                        if (item.type === 'link') { icon = '🔗'; badgeColor = 'bg-blue-100 text-blue-700'; typeName = 'Link & Resource'; }
+                        if (item.type === 'link') { icon = '🔗'; badgeColor = 'bg-blue-100 text-blue-700'; typeName = 'External Link'; }
+                        if (item.noteFormat === 'pdf') { icon = '📄'; badgeColor = 'bg-emerald-100 text-emerald-700'; typeName = 'PDF Document'; }
+                        if (item.noteFormat === 'image') { icon = '🖼️'; badgeColor = 'bg-purple-100 text-purple-700'; typeName = 'Photo Diagram'; }
+                        if (item.noteFormat === 'html') { icon = '💻'; badgeColor = 'bg-indigo-100 text-indigo-700'; typeName = 'Interactive HTML'; }
 
                         return `
                             <div class="bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
@@ -516,17 +659,45 @@
                                         </div>
                                         <h3 class="font-bold text-slate-800 text-lg mb-2">${escapeHtml(item.title)}</h3>
                                         
-                                        ${item.type === 'note' ? `<p class="text-slate-600 text-sm whitespace-pre-line bg-slate-50 p-3 rounded-xl border border-slate-100">${escapeHtml(item.body || '')}</p>` : ''}
+                                        <!-- Note / Material Sub-renderers -->
+                                        ${item.type === 'note' && (!item.noteFormat || item.noteFormat === 'text') ? `<p class="text-slate-600 text-sm whitespace-pre-line bg-slate-50 p-3 rounded-xl border border-slate-100">${escapeHtml(item.body || '')}</p>` : ''}
+                                        
+                                        ${item.type === 'note' && item.noteFormat === 'pdf' && item.pdfData ? `
+                                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                                                <p class="text-xs text-slate-500">Attached PDF learning document:</p>
+                                                <a href="${item.pdfData}" download="${escapeHtml(item.title)}.pdf" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition-colors shadow-sm">
+                                                    📥 Download & View PDF
+                                                </a>
+                                            </div>
+                                        ` : ''}
+
+                                        ${item.type === 'note' && item.noteFormat === 'image' && item.imageData ? `
+                                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2">
+                                                <img src="${item.imageData}" alt="Note Photo" class="w-full rounded-xl object-contain max-h-64 border border-slate-200">
+                                            </div>
+                                        ` : ''}
+
+                                        ${item.type === 'note' && item.noteFormat === 'html' && item.htmlContent ? `
+                                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 overflow-x-auto">
+                                                ${item.htmlContent}
+                                            </div>
+                                        ` : ''}
+
+                                        <!-- Reminder Renderer -->
                                         ${item.type === 'reminder' ? `
                                             <div class="bg-rose-50 border border-rose-100 p-3.5 rounded-xl space-y-1">
                                                 <p class="text-xs font-bold text-rose-700 flex items-center gap-1">📅 Due: ${item.dueDate ? new Date(item.dueDate).toLocaleString() : 'No date specified'}</p>
                                                 <p class="text-slate-700 text-sm whitespace-pre-line">${escapeHtml(item.body || '')}</p>
                                             </div>
                                         ` : ''}
+
+                                        <!-- Link Renderer (Opens in new safe tab) -->
                                         ${item.type === 'link' ? `
-                                            <div class="space-y-2">
+                                            <div class="space-y-3">
                                                 <p class="text-slate-600 text-sm">${escapeHtml(item.description || '')}</p>
-                                                <a href="${escapeHtml(item.url)}" target="_blank" class="text-indigo-600 hover:underline text-sm font-medium break-all flex items-center gap-1">🌐 Visit Resource Link ↗</a>
+                                                <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition-colors shadow-sm">
+                                                    🌐 Open External Link (Google/YouTube ↗)
+                                                </a>
                                             </div>
                                         ` : ''}
                                     </div>
@@ -538,90 +709,122 @@
             `;
         }
 
-        // --- MODAL CONTROLS ---
         function openAddGradeModal() {
+            if (currentMode !== 'teacher') {
+                showNotification("Student view is read-only. Enter teacher mode to add grades.", "error");
+                return;
+            }
             document.getElementById('modal-container').classList.remove('hidden');
             document.getElementById('modal-add-grade').classList.remove('hidden');
             document.getElementById('input-grade-name').value = '';
             document.getElementById('input-grade-desc').value = '';
         }
 
-        function openAddContentModal(type) {
-            if (!activeGradeId) { alert("Please select a grade level first."); return; }
-            currentContentType = type;
-            document.getElementById('modal-container').classList.remove('hidden');
-            document.getElementById('modal-add-content').classList.remove('hidden');
-            document.getElementById('input-edit-id').value = '';
-            
-            document.getElementById('field-container-note').classList.add('hidden');
-            document.getElementById('field-container-reminder').classList.add('hidden');
-            document.getElementById('field-container-link').classList.add('hidden');
+        function openTeacherProfileModal() {
+            if (currentMode !== 'teacher') return;
+            const grade = grades.find(g => g.id === activeGradeId);
+            if (!grade) return;
 
-            const titleEl = document.getElementById('content-modal-title');
-            if (type === 'note') {
-                titleEl.textContent = "Add Lesson Note";
-                document.getElementById('field-container-note').classList.remove('hidden');
-            } else if (type === 'reminder') {
-                titleEl.textContent = "Add Reminder";
-                document.getElementById('field-container-reminder').classList.remove('hidden');
-            } else if (type === 'link') {
-                titleEl.textContent = "Add Link with Preview Photo";
-                document.getElementById('field-container-link').classList.remove('hidden');
-            }
+            document.getElementById('input-prof-name').value = grade.teacherName || '';
+            document.getElementById('input-prof-desc').value = grade.teacherDesc || '';
+            document.getElementById('input-prof-photo-base64').value = grade.teacherPhoto || '';
             
+            const preview = document.getElementById('prof-photo-preview-img');
+            if (grade.teacherPhoto) {
+                preview.src = grade.teacherPhoto;
+                document.getElementById('prof-photo-preview-container').classList.remove('hidden');
+            } else {
+                document.getElementById('prof-photo-preview-container').classList.add('hidden');
+            }
+
+            document.getElementById('modal-container').classList.remove('hidden');
+            document.getElementById('modal-teacher-profile').classList.remove('hidden');
+        }
+
+        async function saveTeacherProfile() {
+            const grade = grades.find(g => g.id === activeGradeId);
+            if (!grade) return;
+
+            grade.teacherName = document.getElementById('input-prof-name').value.trim();
+            grade.teacherDesc = document.getElementById('input-prof-desc').value.trim();
+            const photoVal = document.getElementById('input-prof-photo-base64').value;
+            if (photoVal) grade.teacherPhoto = photoVal;
+
+            saveGradesToStorage();
+            closeModals();
+            renderContents();
+            showNotification("Teacher profile updated successfully!", "success");
+        }
+
+        function openAddContentModal(type) {
+            if (currentMode !== 'teacher') {
+                showNotification("Student view is read-only. Enter teacher mode to add content.", "error");
+                return;
+            }
+            if (!activeGradeId) {
+                showNotification("Please select a grade level first.", "error");
+                return;
+            }
+
+            currentContentType = type;
+            document.getElementById('input-edit-id').value = '';
             document.getElementById('input-content-title').value = '';
             document.getElementById('input-content-body').value = '';
             document.getElementById('input-reminder-date').value = '';
             document.getElementById('input-reminder-body').value = '';
             document.getElementById('input-content-url').value = '';
             document.getElementById('input-link-desc').value = '';
-            document.getElementById('input-photo-file').value = '';
             document.getElementById('input-photo-base64').value = '';
             document.getElementById('photo-preview-container').classList.add('hidden');
-        }
+            document.getElementById('input-pdf-base64').value = '';
+            document.getElementById('pdf-file-name').classList.add('hidden');
+            document.getElementById('input-note-photo-base64').value = '';
+            document.getElementById('note-photo-preview-container').classList.add('hidden');
+            document.getElementById('input-html-body').value = '';
 
-        function editContent(id) {
-            const item = contents.find(c => c.id === id);
-            if (!item) return;
-
-            openAddContentModal(item.type);
-            document.getElementById('input-edit-id').value = item.id;
-            document.getElementById('content-modal-title').textContent = "Edit Content Item";
-            document.getElementById('input-content-title').value = item.title || '';
-
-            if (item.type === 'note') {
-                document.getElementById('input-content-body').value = item.body || '';
-            } else if (item.type === 'reminder') {
-                document.getElementById('input-reminder-date').value = item.dueDate || '';
-                document.getElementById('input-reminder-body').value = item.body || '';
-            } else if (item.type === 'link') {
-                document.getElementById('input-content-url').value = item.url || '';
-                document.getElementById('input-link-desc').value = item.description || '';
-                if (item.photo) {
-                    document.getElementById('input-photo-base64').value = item.photo;
-                    document.getElementById('photo-preview-img').src = item.photo;
-                    document.getElementById('photo-preview-container').classList.remove('hidden');
-                }
+            document.querySelectorAll('.content-field-group').forEach(el => el.classList.add('hidden'));
+            
+            const modalTitle = document.getElementById('content-modal-title');
+            if (type === 'note') {
+                document.getElementById('field-container-note').classList.remove('hidden');
+                modalTitle.textContent = "Add Note or Learning Material (PDF/Photo/HTML)";
+                document.getElementById('input-note-format').value = 'text';
+                toggleNoteFormatFields();
+            } else if (type === 'reminder') {
+                document.getElementById('field-container-reminder').classList.remove('hidden');
+                modalTitle.textContent = "Add Academic Reminder";
+            } else if (type === 'link') {
+                document.getElementById('field-container-link').classList.remove('hidden');
+                modalTitle.textContent = "Add External Link with Preview Photo";
             }
+
+            document.getElementById('modal-container').classList.remove('hidden');
+            document.getElementById('modal-add-content').classList.remove('hidden');
         }
 
         function closeModals() {
             document.getElementById('modal-container').classList.add('hidden');
             document.getElementById('modal-teacher-auth').classList.add('hidden');
             document.getElementById('modal-add-grade').classList.add('hidden');
+            document.getElementById('modal-teacher-profile').classList.add('hidden');
             document.getElementById('modal-add-content').classList.add('hidden');
         }
 
-        // --- STREAMING_CHUNK:Database and local storage persistence logic ---
         async function saveNewGrade() {
             const name = document.getElementById('input-grade-name').value.trim();
             const desc = document.getElementById('input-grade-desc').value.trim();
-            if (!name) { alert("Please enter a grade name."); return; }
+            if (!name) {
+                showNotification("Please enter a grade name.", "error");
+                return;
+            }
 
             const newGrade = {
-                id: 'grade-' + Date.now(),
+                id: 'grade_' + Date.now(),
                 name: name,
-                description: desc
+                description: desc,
+                teacherName: 'Assigned Teacher',
+                teacherDesc: 'Junior High Faculty Instructor',
+                teacherPhoto: 'https://placehold.co/200x200/4f46e5/ffffff?text=Teacher'
             };
 
             if (isSupabaseConnected && supabaseClient) {
@@ -631,88 +834,163 @@
             }
 
             grades.push(newGrade);
-            localStorage.setItem('math_grades_v2', JSON.stringify(grades));
+            saveGradesToStorage();
             closeModals();
             selectGrade(newGrade.id);
-            renderGrades();
-        }
-
-        async function deleteGrade(id) {
-            if (!confirm("Are you sure you want to delete this grade level?")) return;
-            if (isSupabaseConnected && supabaseClient) {
-                try {
-                    await supabaseClient.from('grades').delete().eq('id', id);
-                } catch (e) {}
-            }
-            grades = grades.filter(g => g.id !== id);
-            localStorage.setItem('math_grades_v2', JSON.stringify(grades));
-            if (activeGradeId === id) {
-                activeGradeId = grades.length > 0 ? grades[0].id : null;
-            }
-            loadGrades();
-            if (activeGradeId) selectGrade(activeGradeId);
-            else {
-                document.getElementById('current-grade-title').textContent = "Select a Grade Level";
-                document.getElementById('content-container').innerHTML = '';
-            }
+            showNotification("Grade level created successfully!", "success");
         }
 
         async function saveNewContent() {
-            const title = document.getElementById('input-content-title').value.trim();
             const editId = document.getElementById('input-edit-id').value;
-            if (!title) { alert("Please enter a title."); return; }
+            const title = document.getElementById('input-content-title').value.trim();
+            if (!title) {
+                showNotification("Please enter a title.", "error");
+                return;
+            }
 
-            const photoBase64 = document.getElementById('input-photo-base64').value;
-            const existingItem = editId ? contents.find(c => c.id === editId) : null;
-
-            let updatedItem = {
-                id: editId || ('c-' + Date.now()),
+            let newItem = {
+                id: editId || 'content_' + Date.now(),
                 grade_id: activeGradeId,
                 type: currentContentType,
-                title: title,
-                body: currentContentType === 'note' ? document.getElementById('input-content-body').value : (currentContentType === 'reminder' ? document.getElementById('input-reminder-body').value : ''),
-                dueDate: currentContentType === 'reminder' ? document.getElementById('input-reminder-date').value : '',
-                url: currentContentType === 'link' ? document.getElementById('input-content-url').value : '',
-                description: currentContentType === 'link' ? document.getElementById('input-link-desc').value : '',
-                photo: photoBase64 || (existingItem ? existingItem.photo : '')
+                title: title
             };
 
-            if (isSupabaseConnected && supabaseClient) {
-                try {
-                    if (editId) {
-                        await supabaseClient.from('contents').update(updatedItem).eq('id', editId);
-                    } else {
-                        await supabaseClient.from('contents').insert([updatedItem]);
-                    }
-                } catch (e) {}
+            if (currentContentType === 'note') {
+                const format = document.getElementById('input-note-format').value;
+                newItem.noteFormat = format;
+                if (format === 'text') newItem.body = document.getElementById('input-content-body').value.trim();
+                if (format === 'pdf') newItem.pdfData = document.getElementById('input-pdf-base64').value;
+                if (format === 'image') newItem.imageData = document.getElementById('input-note-photo-base64').value;
+                if (format === 'html') newItem.htmlContent = document.getElementById('input-html-body').value.trim();
+            } else if (currentContentType === 'reminder') {
+                newItem.dueDate = document.getElementById('input-reminder-date').value;
+                newItem.body = document.getElementById('input-reminder-body').value.trim();
+            } else if (currentContentType === 'link') {
+                newItem.url = document.getElementById('input-content-url').value.trim();
+                newItem.description = document.getElementById('input-link-desc').value.trim();
+                newItem.photo = document.getElementById('input-photo-base64').value;
             }
 
             if (editId) {
-                contents = contents.map(c => c.id === editId ? updatedItem : c);
+                const index = contents.findIndex(c => c.id === editId);
+                if (index !== -1) contents[index] = newItem;
             } else {
-                contents.push(updatedItem);
+                contents.unshift(newItem);
             }
 
-            localStorage.setItem('math_contents_v2_' + activeGradeId, JSON.stringify(contents));
+            if (isSupabaseConnected && supabaseClient) {
+                try {
+                    await supabaseClient.from('contents').upsert([newItem]);
+                } catch (e) {}
+            }
+
+            saveContentsToStorage();
             closeModals();
             renderContents();
+            showNotification("Material saved successfully!", "success");
+        }
+
+        function editContent(id) {
+            if (currentMode !== 'teacher') return;
+            const item = contents.find(c => c.id === id);
+            if (!item) return;
+
+            openAddContentModal(item.type);
+            document.getElementById('input-edit-id').value = item.id;
+            document.getElementById('input-content-title').value = item.title;
+
+            if (item.type === 'note') {
+                const format = item.noteFormat || 'text';
+                document.getElementById('input-note-format').value = format;
+                toggleNoteFormatFields();
+                if (format === 'text') document.getElementById('input-content-body').value = item.body || '';
+                if (format === 'pdf') document.getElementById('input-pdf-base64').value = item.pdfData || '';
+                if (format === 'image') {
+                    document.getElementById('input-note-photo-base64').value = item.imageData || '';
+                    if (item.imageData) {
+                        document.getElementById('note-photo-preview-img').src = item.imageData;
+                        document.getElementById('note-photo-preview-container').classList.remove('hidden');
+                    }
+                }
+                if (format === 'html') document.getElementById('input-html-body').value = item.htmlContent || '';
+            } else if (item.type === 'reminder') {
+                document.getElementById('input-reminder-date').value = item.dueDate || '';
+                document.getElementById('input-reminder-body').value = item.body || '';
+            } else if (item.type === 'link') {
+                document.getElementById('input-content-url').value = item.url || '';
+                document.getElementById('input-link-desc').value = item.description || '';
+                document.getElementById('input-photo-base64').value = item.photo || '';
+                if (item.photo) {
+                    document.getElementById('photo-preview-img').src = item.photo;
+                    document.getElementById('photo-preview-container').classList.remove('hidden');
+                }
+            }
         }
 
         async function deleteContent(id) {
-            if (!confirm("Delete this content item?")) return;
+            if (currentMode !== 'teacher') return;
+            if (!confirm("Are you sure you want to delete this learning item?")) return;
+
+            contents = contents.filter(c => c.id !== id);
             if (isSupabaseConnected && supabaseClient) {
                 try {
                     await supabaseClient.from('contents').delete().eq('id', id);
                 } catch (e) {}
             }
-            contents = contents.filter(c => c.id !== id);
-            localStorage.setItem('math_contents_v2_' + activeGradeId, JSON.stringify(contents));
+            saveContentsToStorage();
             renderContents();
+            showNotification("Item deleted.", "success");
+        }
+
+        async function deleteGrade(id) {
+            if (currentMode !== 'teacher') return;
+            if (!confirm("Delete this grade level and its associated materials?")) return;
+
+            grades = grades.filter(g => g.id !== id);
+            if (isSupabaseConnected && supabaseClient) {
+                try {
+                    await supabaseClient.from('grades').delete().eq('id', id);
+                } catch (e) {}
+            }
+            saveGradesToStorage();
+            if (activeGradeId === id) {
+                activeGradeId = grades.length > 0 ? grades[0].id : null;
+            }
+            renderGrades();
+            if (activeGradeId) selectGrade(activeGradeId);
+            else document.getElementById('content-container').innerHTML = '';
+            showNotification("Grade level removed.", "success");
+        }
+
+        function saveGradesToStorage() {
+            localStorage.setItem('math_grades_v3', JSON.stringify(grades));
+        }
+
+        function saveContentsToStorage() {
+            if (activeGradeId) {
+                localStorage.setItem('math_contents_v3_' + activeGradeId, JSON.stringify(contents));
+            }
         }
 
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(>g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function showNotification(msg, type) {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-5 right-5 z-50 px-5 py-3 rounded-2xl shadow-xl text-white font-medium text-sm transition-all transform translate-y-2 animate-bounce ${type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'}`;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
     </script>
 </body>
