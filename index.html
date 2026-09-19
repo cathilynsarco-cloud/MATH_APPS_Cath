@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MathConnect - Junior High Hub</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        fun: ['Fredoka', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            touch-action: manipulation;
+        }
+        h1, h2, h3, .font-fun {
+            font-family: 'Fredoka', sans-serif;
+        }
+        .btn-press:active {
+            transform: scale(0.97);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col text-slate-800 bg-slate-50">
+
+    <div id="app" class="flex-1 flex flex-col h-full overflow-hidden">
+        
+        <!-- Top Navigation Bar -->
+        <header class="bg-indigo-600 text-white shadow-md z-20 flex justify-between items-center px-4 py-3 sm:px-6">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/10 p-2 rounded-xl text-2xl">📐</div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold tracking-tight">MathConnect Junior High</h1>
+                    <p class="text-xs text-indigo-200 hidden sm:block">Interactive Teacher Dashboard & Student Hub</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <!-- Mode Switcher -->
+                <div class="bg-indigo-900/40 p-1 rounded-xl flex items-center border border-indigo-400/30">
+                    <button onclick="requestTeacherMode()" id="btn-mode-teacher" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-indigo-700 shadow-sm">
+                        👨‍🏫 Teacher Mode
+                    </button>
+                    <button onclick="switchMode('student')" id="btn-mode-student" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-indigo-100 hover:text-white">
+                        🎓 Student Portal
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-hidden flex flex-col md:flex-row relative">
+            
+            <!-- Sidebar: Grade Levels -->
+            <aside class="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col z-10 shadow-sm">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <h2 class="font-bold text-slate-700 text-sm uppercase tracking-wider flex items-center gap-2">
+                        <span>📚</span> Grade Levels
+                    </h2>
+                    <button onclick="openAddGradeModal()" id="teacher-add-grade-btn" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-1">
+                        ➕ Add Grade
+                    </button>
+                </div>
+
+                <!-- Grade List -->
+                <div id="grade-list" class="flex-1 overflow-y-auto p-3 space-y-2">
+                    <div class="p-4 text-center text-slate-400 text-sm">Loading grades...</div>
+                </div>
+
+                <!-- Sync Status Badge -->
+                <div class="p-3 border-t border-slate-100 bg-slate-50 text-xs text-slate-500 flex items-center justify-between">
+                    <span id="sync-status" class="flex items-center gap-1.5 text-indigo-600 font-medium">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Supabase Connected
+                    </span>
+                    <button onclick="testSupabaseConnection()" class="text-indigo-600 hover:underline">Check</button>
+                </div>
+            </aside>
+
+            <!-- Content View Area -->
+            <section class="flex-1 flex flex-col overflow-hidden bg-slate-50">
+                
+                <!-- Grade Header Bar -->
+                <div id="active-grade-header" class="bg-white border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-sm">
+                    <div>
+                        <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-full uppercase tracking-wider">Active Level</span>
+                        <h2 id="current-grade-title" class="text-2xl font-bold text-slate-800 mt-1">Select a Grade Level</h2>
+                    </div>
+                    
+                    <!-- Teacher Quick Actions -->
+                    <div id="teacher-actions" class="flex items-center gap-2 hidden flex-wrap">
+                        <button onclick="openAddContentModal('note')" class="btn-press bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-1.5">
+                            📝 Add Note
+                        </button>
+                        <button onclick="openAddContentModal('reminder')" class="btn-press bg-rose-500 hover:bg-rose-600 text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-1.5">
+                            ⏰ Add Reminder
+                        </button>
+                        <button onclick="openAddContentModal('link')" class="btn-press bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-1.5">
+                            🔗 Add Link with Preview Photo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Content Feed Grid -->
+                <div class="flex-1 overflow-y-auto p-4 sm:p-6" id="content-container">
+                    <div class="flex flex-col items-center justify-center h-64 text-center">
+                        <div class="text-5xl mb-3">👈</div>
+                        <h3 class="text-lg font-bold text-slate-700">Choose a grade level from the sidebar</h3>
+                        <p class="text-slate-500 text-sm max-w-sm mt-1">Select or create a grade level to view notes, reminders, and links with preview photos.</p>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <div id="modal-container" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        
+        <!-- Teacher Password Modal -->
+        <div id="modal-teacher-auth" class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden hidden transform transition-all">
+            <div class="bg-indigo-600 text-white p-5 flex justify-between items-center">
+                <h3 class="text-xl font-bold">Teacher Authentication</h3>
+                <button onclick="closeModals()" class="text-indigo-200 hover:text-white text-xl font-bold">✕</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-xs text-slate-500">Please enter the teacher access password to manage content and grade levels.</p>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Password</label>
+                    <input type="password" id="input-teacher-password" placeholder="Enter password..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500" onkeydown="if(event.key==='Enter') verifyTeacherPassword()">
+                </div>
+                <div class="pt-2 flex justify-end gap-3">
+                    <button onclick="closeModals()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium">Cancel</button>
+                    <button onclick="verifyTeacherPassword()" class="btn-press px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-md">Authenticate</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Grade Modal -->
+        <div id="modal-add-grade" class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden hidden transform transition-all">
+            <div class="bg-indigo-600 text-white p-5 flex justify-between items-center">
+                <h3 class="text-xl font-bold">Add New Grade Level</h3>
+                <button onclick="closeModals()" class="text-indigo-200 hover:text-white text-xl font-bold">✕</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Grade Name</label>
+                    <input type="text" id="input-grade-name" placeholder="e.g., 7th Grade Math" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Description / Topic Focus</label>
+                    <input type="text" id="input-grade-desc" placeholder="e.g., Pre-Algebra & Equations" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="pt-2 flex justify-end gap-3">
+                    <button onclick="closeModals()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium">Cancel</button>
+                    <button onclick="saveNewGrade()" class="btn-press px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-md">Create Grade</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add/Edit Content Modal -->
+        <div id="modal-add-content" class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden hidden transform transition-all max-h-[90vh] flex flex-col">
+            <div id="content-modal-header" class="bg-indigo-600 text-white p-5 flex justify-between items-center">
+                <h3 id="content-modal-title" class="text-xl font-bold">Add Content</h3>
+                <button onclick="closeModals()" class="text-indigo-200 hover:text-white text-xl font-bold">✕</button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto flex-1">
+                <input type="hidden" id="input-edit-id">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Title</label>
+                    <input type="text" id="input-content-title" placeholder="e.g., Chapter 1 Review Material" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                </div>
+                
+                <!-- Note Field Group -->
+                <div id="field-container-note" class="content-field-group">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Note Content / Explanation</label>
+                    <textarea id="input-content-body" rows="5" placeholder="Write lesson notes, formulas, or instructions here..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 font-sans text-sm"></textarea>
+                </div>
+
+                <!-- Reminder Field Group -->
+                <div id="field-container-reminder" class="content-field-group hidden space-y-3">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Due Date & Time</label>
+                        <input type="datetime-local" id="input-reminder-date" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Reminder Details</label>
+                        <textarea id="input-reminder-body" rows="3" placeholder="Enter details regarding quiz, homework or exam..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm"></textarea>
+                    </div>
+                </div>
+
+                <!-- Link & Photo Field Group -->
+                <div id="field-container-link" class="content-field-group hidden space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">External Website URL</label>
+                        <input type="url" id="input-content-url" placeholder="https://www.khanacademy.org/..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Details / Description</label>
+                        <textarea id="input-link-desc" rows="3" placeholder="Briefly describe what students will find on this link..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Preview Cover Photo (Auto-compressed)</label>
+                        <div class="flex items-center gap-4">
+                            <input type="file" id="input-photo-file" accept="image/*" onchange="handleImageUpload(event)" class="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                        </div>
+                        <input type="hidden" id="input-photo-base64">
+                        <div id="photo-preview-container" class="mt-3 hidden">
+                            <p class="text-xs text-slate-400 mb-1">Compressed Preview:</p>
+                            <img id="photo-preview-img" src="" alt="Preview" class="h-32 w-auto rounded-xl object-cover border border-slate-200">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-3 border-t border-slate-100">
+                    <button onclick="closeModals()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium">Cancel</button>
+                    <button onclick="saveNewContent()" class="btn-press px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-md">Save Content</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        // --- STREAMING_CHUNK:Supabase configuration and initialization ---
+        const SUPABASE_URL = 'https://lpheculpaxwakrqshgmf.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_xo9Ju3gxXbhpImWPTfaicA_-ay4Fua-';
+
+        let supabaseClient = null;
+        let isSupabaseConnected = false;
+
+        try {
+            if (window.supabase && typeof window.supabase.createClient === 'function') {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                isSupabaseConnected = true;
+                console.log("Supabase initialized successfully.");
+            }
+        } catch (err) {
+            console.warn("Supabase initialization notice:", err);
+        }
+
+        // --- APPLICATION STATE ---
+        let currentMode = 'teacher';
+        let grades = [];
+        let activeGradeId = null;
+        let contents = [];
+        let currentContentType = 'note';
+
+        const defaultGrades = [
+            { id: 'grade-7', name: '7th Grade Math', description: 'Integers, Ratios & Basic Algebra' },
+            { id: 'grade-8', name: '8th Grade Math', description: 'Linear Equations & Geometry' }
+        ];
+
+        const defaultContents = {
+            'grade-7': [
+                { id: 'c1', grade_id: 'grade-7', type: 'note', title: 'Integer Rules Cheat Sheet', body: '• Adding Same Signs: Add numbers and keep the sign.\n• Adding Different Signs: Subtract smaller from larger and take the sign of the larger number.' },
+                { id: 'c2', grade_id: 'grade-7', type: 'reminder', title: 'Quiz on Ratios Next Tuesday!', dueDate: '2026-06-15T10:00', body: 'Please review textbook chapters 2.1 to 2.4 before class.' },
+                { id: 'c3', grade_id: 'grade-7', type: 'link', title: 'Khan Academy 7th Grade Ratios', url: 'https://www.khanacademy.org/math/cc-7th-grade-math', description: 'Interactive exercises and tutorial videos on proportional relationships.', photo: 'https://placehold.co/600x300/4f46e5/ffffff?text=Khan+Academy' }
+            ]
+        };
+
+        // --- INIT ON LOAD ---
+        window.onload = async function() {
+            await loadGrades();
+            updateModeUI();
+            testSupabaseConnection();
+        };
+
+        // --- STREAMING_CHUNK:Password protected teacher mode logic ---
+        function requestTeacherMode() {
+            if (currentMode === 'teacher') return;
+            document.getElementById('modal-container').classList.remove('hidden');
+            document.getElementById('modal-teacher-auth').classList.remove('hidden');
+            document.getElementById('input-teacher-password').value = '';
+            setTimeout(() => document.getElementById('input-teacher-password').focus(), 100);
+        }
+
+        function verifyTeacherPassword() {
+            const pwd = document.getElementById('input-teacher-password').value;
+            if (pwd === '121488') {
+                closeModals();
+                switchMode('teacher');
+            } else {
+                alert("Incorrect password. Access denied.");
+                document.getElementById('input-teacher-password').value = '';
+            }
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            const btnTeacher = document.getElementById('btn-mode-teacher');
+            const btnStudent = document.getElementById('btn-mode-student');
+            const teacherAddBtn = document.getElementById('teacher-add-grade-btn');
+            const teacherActions = document.getElementById('teacher-actions');
+
+            if (mode === 'teacher') {
+                btnTeacher.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-indigo-700 shadow-sm";
+                btnStudent.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-indigo-100 hover:text-white";
+                teacherAddBtn.classList.remove('hidden');
+                if(activeGradeId) teacherActions.classList.remove('hidden');
+            } else {
+                btnStudent.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-indigo-700 shadow-sm";
+                btnTeacher.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-indigo-100 hover:text-white";
+                teacherAddBtn.classList.add('hidden');
+                teacherActions.classList.add('hidden');
+            }
+            renderGrades();
+            if (activeGradeId) renderContents();
+        }
+
+        function updateModeUI() {
+            switchMode(currentMode);
+        }
+
+        // --- STREAMING_CHUNK:Supabase database storage sync ---
+        async function testSupabaseConnection() {
+            const statusEl = document.getElementById('sync-status');
+            if (!isSupabaseConnected || !supabaseClient) {
+                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> Local Mode';
+                return;
+            }
+            try {
+                const { data, error } = await supabaseClient.from('grades').select('id').limit(1);
+                if (error) {
+                    statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500"></span> Using Local Storage Fallback';
+                } else {
+                    statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Supabase Connected';
+                }
+            } catch (err) {
+                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> Offline Fallback';
+            }
+        }
+
+        async function loadGrades() {
+            if (isSupabaseConnected && supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient.from('grades').select('*');
+                    if (!error && data && data.length > 0) {
+                        grades = data;
+                        if (!activeGradeId && grades.length > 0) selectGrade(grades[0].id);
+                        renderGrades();
+                        return;
+                    }
+                } catch (e) {}
+            }
+            
+            const savedGrades = localStorage.getItem('math_grades_v2');
+            grades = savedGrades ? JSON.parse(savedGrades) : defaultGrades;
+            if (!activeGradeId && grades.length > 0) selectGrade(grades[0].id);
+            renderGrades();
+        }
+
+        async function loadContentsForGrade(gradeId) {
+            if (isSupabaseConnected && supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient.from('contents').select('*').eq('grade_id', gradeId);
+                    if (!error && data) {
+                        contents = data;
+                        renderContents();
+                        return;
+                    }
+                } catch (e) {}
+            }
+            
+            if (!defaultContents[gradeId]) defaultContents[gradeId] = [];
+            const savedContents = localStorage.getItem('math_contents_v2_' + gradeId);
+            contents = savedContents ? JSON.parse(savedContents) : defaultContents[gradeId];
+            renderContents();
+        }
+
+        // --- STREAMING_CHUNK:Image compression utility function ---
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 400;
+                    const MAX_HEIGHT = 300;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Compress to JPEG with 0.7 quality for lower resolution
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    document.getElementById('input-photo-base64').value = compressedDataUrl;
+                    
+                    const previewImg = document.getElementById('photo-preview-img');
+                    previewImg.src = compressedDataUrl;
+                    document.getElementById('photo-preview-container').classList.remove('hidden');
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        // --- RENDERING UI ---
+        function renderGrades() {
+            const listEl = document.getElementById('grade-list');
+            if (!grades || grades.length === 0) {
+                listEl.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm">No grade levels added yet.</div>`;
+                return;
+            }
+
+            listEl.innerHTML = grades.map(g => `
+                <div onclick="selectGrade('${g.id}')" class="p-3.5 rounded-2xl cursor-pointer transition-all border ${activeGradeId === g.id ? 'bg-indigo-50 border-indigo-300 shadow-sm' : 'bg-white border-slate-100 hover:bg-slate-50'} flex justify-between items-center group">
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">${escapeHtml(g.name)}</h4>
+                        <p class="text-xs text-slate-500 truncate max-w-[180px]">${escapeHtml(g.description || '')}</p>
+                    </div>
+                    ${currentMode === 'teacher' ? `
+                        <button onclick="event.stopPropagation(); deleteGrade('${g.id}')" class="text-slate-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity">🗑️</button>
+                    ` : '<span class="text-indigo-400 font-bold">›</span>'}
+                </div>
+            `).join('');
+        }
+
+        function selectGrade(id) {
+            activeGradeId = id;
+            const grade = grades.find(g => g.id === id);
+            if (grade) {
+                document.getElementById('current-grade-title').textContent = grade.name;
+            }
+            if (currentMode === 'teacher') {
+                document.getElementById('teacher-actions').classList.remove('hidden');
+            }
+            renderGrades();
+            loadContentsForGrade(id);
+        }
+
+        // --- STREAMING_CHUNK:Rendering content cards for notes, reminders, and links ---
+        function renderContents() {
+            const container = document.getElementById('content-container');
+            if (!activeGradeId) return;
+
+            if (!contents || contents.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-64 text-center">
+                        <div class="text-4xl mb-2">📂</div>
+                        <h4 class="font-bold text-slate-700">No content in this grade yet</h4>
+                        <p class="text-slate-400 text-sm mt-1">${currentMode === 'teacher' ? 'Click the buttons above to add notes, reminders, or links!' : 'Your teacher has not published content here yet.'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
+                    ${contents.map(item => {
+                        let icon = '📝';
+                        let badgeColor = 'bg-amber-100 text-amber-700';
+                        let typeName = 'Note';
+                        if (item.type === 'reminder') { icon = '⏰'; badgeColor = 'bg-rose-100 text-rose-700'; typeName = 'Reminder'; }
+                        if (item.type === 'link') { icon = '🔗'; badgeColor = 'bg-blue-100 text-blue-700'; typeName = 'Link & Resource'; }
+
+                        return `
+                            <div class="bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+                                <div>
+                                    ${item.photo ? `<div class="w-full h-40 bg-slate-100 overflow-hidden border-b border-slate-100"><img src="${item.photo}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover"></div>` : ''}
+                                    <div class="p-5">
+                                        <div class="flex justify-between items-start gap-2 mb-2">
+                                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${badgeColor}">${icon} ${typeName}</span>
+                                            ${currentMode === 'teacher' ? `
+                                                <div class="flex items-center gap-2">
+                                                    <button onclick="editContent('${item.id}')" class="text-slate-400 hover:text-indigo-600 text-xs">✏️ Edit</button>
+                                                    <button onclick="deleteContent('${item.id}')" class="text-slate-300 hover:text-red-500 text-xs">🗑️</button>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                        <h3 class="font-bold text-slate-800 text-lg mb-2">${escapeHtml(item.title)}</h3>
+                                        
+                                        ${item.type === 'note' ? `<p class="text-slate-600 text-sm whitespace-pre-line bg-slate-50 p-3 rounded-xl border border-slate-100">${escapeHtml(item.body || '')}</p>` : ''}
+                                        ${item.type === 'reminder' ? `
+                                            <div class="bg-rose-50 border border-rose-100 p-3.5 rounded-xl space-y-1">
+                                                <p class="text-xs font-bold text-rose-700 flex items-center gap-1">📅 Due: ${item.dueDate ? new Date(item.dueDate).toLocaleString() : 'No date specified'}</p>
+                                                <p class="text-slate-700 text-sm whitespace-pre-line">${escapeHtml(item.body || '')}</p>
+                                            </div>
+                                        ` : ''}
+                                        ${item.type === 'link' ? `
+                                            <div class="space-y-2">
+                                                <p class="text-slate-600 text-sm">${escapeHtml(item.description || '')}</p>
+                                                <a href="${escapeHtml(item.url)}" target="_blank" class="text-indigo-600 hover:underline text-sm font-medium break-all flex items-center gap-1">🌐 Visit Resource Link ↗</a>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // --- MODAL CONTROLS ---
+        function openAddGradeModal() {
+            document.getElementById('modal-container').classList.remove('hidden');
+            document.getElementById('modal-add-grade').classList.remove('hidden');
+            document.getElementById('input-grade-name').value = '';
+            document.getElementById('input-grade-desc').value = '';
+        }
+
+        function openAddContentModal(type) {
+            if (!activeGradeId) { alert("Please select a grade level first."); return; }
+            currentContentType = type;
+            document.getElementById('modal-container').classList.remove('hidden');
+            document.getElementById('modal-add-content').classList.remove('hidden');
+            document.getElementById('input-edit-id').value = '';
+            
+            document.getElementById('field-container-note').classList.add('hidden');
+            document.getElementById('field-container-reminder').classList.add('hidden');
+            document.getElementById('field-container-link').classList.add('hidden');
+
+            const titleEl = document.getElementById('content-modal-title');
+            if (type === 'note') {
+                titleEl.textContent = "Add Lesson Note";
+                document.getElementById('field-container-note').classList.remove('hidden');
+            } else if (type === 'reminder') {
+                titleEl.textContent = "Add Reminder";
+                document.getElementById('field-container-reminder').classList.remove('hidden');
+            } else if (type === 'link') {
+                titleEl.textContent = "Add Link with Preview Photo";
+                document.getElementById('field-container-link').classList.remove('hidden');
+            }
+            
+            document.getElementById('input-content-title').value = '';
+            document.getElementById('input-content-body').value = '';
+            document.getElementById('input-reminder-date').value = '';
+            document.getElementById('input-reminder-body').value = '';
+            document.getElementById('input-content-url').value = '';
+            document.getElementById('input-link-desc').value = '';
+            document.getElementById('input-photo-file').value = '';
+            document.getElementById('input-photo-base64').value = '';
+            document.getElementById('photo-preview-container').classList.add('hidden');
+        }
+
+        function editContent(id) {
+            const item = contents.find(c => c.id === id);
+            if (!item) return;
+
+            openAddContentModal(item.type);
+            document.getElementById('input-edit-id').value = item.id;
+            document.getElementById('content-modal-title').textContent = "Edit Content Item";
+            document.getElementById('input-content-title').value = item.title || '';
+
+            if (item.type === 'note') {
+                document.getElementById('input-content-body').value = item.body || '';
+            } else if (item.type === 'reminder') {
+                document.getElementById('input-reminder-date').value = item.dueDate || '';
+                document.getElementById('input-reminder-body').value = item.body || '';
+            } else if (item.type === 'link') {
+                document.getElementById('input-content-url').value = item.url || '';
+                document.getElementById('input-link-desc').value = item.description || '';
+                if (item.photo) {
+                    document.getElementById('input-photo-base64').value = item.photo;
+                    document.getElementById('photo-preview-img').src = item.photo;
+                    document.getElementById('photo-preview-container').classList.remove('hidden');
+                }
+            }
+        }
+
+        function closeModals() {
+            document.getElementById('modal-container').classList.add('hidden');
+            document.getElementById('modal-teacher-auth').classList.add('hidden');
+            document.getElementById('modal-add-grade').classList.add('hidden');
+            document.getElementById('modal-add-content').classList.add('hidden');
+        }
+
+        // --- STREAMING_CHUNK:Database and local storage persistence logic ---
+        async function saveNewGrade() {
+            const name = document.getElementById('input-grade-name').value.trim();
+            const desc = document.getElementById('input-grade-desc').value.trim();
+            if (!name) { alert("Please enter a grade name."); return; }
+
+            const newGrade = {
+                id: 'grade-' + Date.now(),
+                name: name,
+                description: desc
+            };
+
+            if (isSupabaseConnected && supabaseClient) {
+                try {
+                    await supabaseClient.from('grades').insert([newGrade]);
+                } catch (e) {}
+            }
+
+            grades.push(newGrade);
+            localStorage.setItem('math_grades_v2', JSON.stringify(grades));
+            closeModals();
+            selectGrade(newGrade.id);
+            renderGrades();
+        }
+
+        async function deleteGrade(id) {
+            if (!confirm("Are you sure you want to delete this grade level?")) return;
+            if (isSupabaseConnected && supabaseClient) {
+                try {
+                    await supabaseClient.from('grades').delete().eq('id', id);
+                } catch (e) {}
+            }
+            grades = grades.filter(g => g.id !== id);
+            localStorage.setItem('math_grades_v2', JSON.stringify(grades));
+            if (activeGradeId === id) {
+                activeGradeId = grades.length > 0 ? grades[0].id : null;
+            }
+            loadGrades();
+            if (activeGradeId) selectGrade(activeGradeId);
+            else {
+                document.getElementById('current-grade-title').textContent = "Select a Grade Level";
+                document.getElementById('content-container').innerHTML = '';
+            }
+        }
+
+        async function saveNewContent() {
+            const title = document.getElementById('input-content-title').value.trim();
+            const editId = document.getElementById('input-edit-id').value;
+            if (!title) { alert("Please enter a title."); return; }
+
+            const photoBase64 = document.getElementById('input-photo-base64').value;
+            const existingItem = editId ? contents.find(c => c.id === editId) : null;
+
+            let updatedItem = {
+                id: editId || ('c-' + Date.now()),
+                grade_id: activeGradeId,
+                type: currentContentType,
+                title: title,
+                body: currentContentType === 'note' ? document.getElementById('input-content-body').value : (currentContentType === 'reminder' ? document.getElementById('input-reminder-body').value : ''),
+                dueDate: currentContentType === 'reminder' ? document.getElementById('input-reminder-date').value : '',
+                url: currentContentType === 'link' ? document.getElementById('input-content-url').value : '',
+                description: currentContentType === 'link' ? document.getElementById('input-link-desc').value : '',
+                photo: photoBase64 || (existingItem ? existingItem.photo : '')
+            };
+
+            if (isSupabaseConnected && supabaseClient) {
+                try {
+                    if (editId) {
+                        await supabaseClient.from('contents').update(updatedItem).eq('id', editId);
+                    } else {
+                        await supabaseClient.from('contents').insert([updatedItem]);
+                    }
+                } catch (e) {}
+            }
+
+            if (editId) {
+                contents = contents.map(c => c.id === editId ? updatedItem : c);
+            } else {
+                contents.push(updatedItem);
+            }
+
+            localStorage.setItem('math_contents_v2_' + activeGradeId, JSON.stringify(contents));
+            closeModals();
+            renderContents();
+        }
+
+        async function deleteContent(id) {
+            if (!confirm("Delete this content item?")) return;
+            if (isSupabaseConnected && supabaseClient) {
+                try {
+                    await supabaseClient.from('contents').delete().eq('id', id);
+                } catch (e) {}
+            }
+            contents = contents.filter(c => c.id !== id);
+            localStorage.setItem('math_contents_v2_' + activeGradeId, JSON.stringify(contents));
+            renderContents();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
