@@ -340,32 +340,9 @@
         let contents = [];
         let currentContentType = 'note';
 
-        const defaultGrades = [
-            { 
-                id: 'grade-7', 
-                name: '7th Grade Math', 
-                description: 'Integers, Ratios & Basic Algebra',
-                teacherName: 'Prof. Sarah Jenkins',
-                teacherPhoto: 'https://placehold.co/150/4f46e5/ffffff?text=SJ',
-                teacherBio: 'Junior High Math Department Chair & Curriculum Lead.'
-            },
-            { 
-                id: 'grade-8', 
-                name: '8th Grade Math', 
-                description: 'Linear Equations & Geometry',
-                teacherName: 'Mr. David Miller',
-                teacherPhoto: 'https://placehold.co/150/0284c7/ffffff?text=DM',
-                teacherBio: 'Algebra Specialist & STEM Club Advisor.'
-            }
-        ];
-
-        const defaultContents = {
-            'grade-7': [
-                { id: 'c1', grade_id: 'grade-7', type: 'note', title: 'Integer Rules Cheat Sheet', body: '• Adding Same Signs: Add numbers and keep the sign.\n• Adding Different Signs: Subtract smaller from larger and take the sign of the larger number.', customHtml: '', fileData: '', fileType: '', fileName: '' },
-                { id: 'c2', grade_id: 'grade-7', type: 'reminder', title: 'Quiz on Ratios Next Tuesday!', dueDate: '2026-06-15T10:00', body: 'Please review textbook chapters 2.1 to 2.4 before class.' },
-                { id: 'c3', grade_id: 'grade-7', type: 'link', title: 'Khan Academy 7th Grade Ratios', url: 'https://www.khanacademy.org/math/cc-7th-grade-math', description: 'Interactive exercises and tutorial videos on proportional relationships.', photo: 'https://placehold.co/600x300/4f46e5/ffffff?text=Khan+Academy' }
-            ]
-        };
+        // Emptied out hardcoded defaults so app relies strictly on live Supabase online database
+        const defaultGrades = [];
+        const defaultContents = {};
 
         window.onload = async function() {
             await loadGrades();
@@ -437,7 +414,7 @@
             if (isSupabaseConnected && supabaseClient) {
                 try {
                     const { data, error } = await supabaseClient.from('grades').select('*');
-                    if (!error && data && data.length > 0) {
+                    if (!error && data) {
                         grades = data;
                         if (!activeGradeId && grades.length > 0) selectGrade(grades[0].id);
                         renderGrades();
@@ -541,7 +518,7 @@
         function renderGrades() {
             const listEl = document.getElementById('grade-list');
             if (!grades || grades.length === 0) {
-                listEl.innerHTML = `<div class="p-3 text-center text-slate-400 text-xs">No grade levels added yet.</div>`;
+                listEl.innerHTML = `<div class="p-3 text-center text-slate-400 text-xs">No grade levels added yet. Switch to Teacher mode to add one!</div>`;
                 return;
             }
 
