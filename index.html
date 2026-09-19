@@ -393,41 +393,65 @@
 
         async function loadGrades() {
             let remoteGrades = [];
+            let fetchSuccess = false;
+
             if (isSupabaseConnected && supabaseClient) {
                 try {
                     const { data, error } = await supabaseClient.from('grades').select('*');
-                    if (!error && data) remoteGrades = data;
-                } catch (e) {}
+                    if (!error && data) {
+                        remoteGrades = data;
+                        fetchSuccess = true;
+                    }
+                } catch (e) {
+                    console.log("Network fetch failed, falling back to local cache.");
+                }
             }
+
             const savedGrades = localStorage.getItem('math_grades_v5');
             const localGrades = savedGrades ? JSON.parse(savedGrades) : [];
             
-            const mergedMap = new Map();
-            localGrades.forEach(g => mergedMap.set(g.id, g));
-            remoteGrades.forEach(g => mergedMap.set(g.id, g));
-            grades = Array.from(mergedMap.values());
+            if (fetchSuccess) {
+                grades = remoteGrades;
+                safeLocalStorageSet('math_grades_v5', JSON.stringify(grades));
+            } else {
+                const mergedMap = new Map();
+                localGrades.forEach(g => mergedMap.set(g.id, g));
+                remoteGrades.forEach(g => mergedMap.set(g.id, g));
+                grades = Array.from(mergedMap.values());
+            }
             
-            safeLocalStorageSet('math_grades_v5', JSON.stringify(grades));
             renderDashboardGrades();
         }
 
         async function loadContentsForGrade(gradeId) {
             let remoteContents = [];
+            let fetchSuccess = false;
+
             if (isSupabaseConnected && supabaseClient) {
                 try {
                     const { data, error } = await supabaseClient.from('contents').select('*').eq('grade_id', gradeId);
-                    if (!error && data) remoteContents = data;
-                } catch (e) {}
+                    if (!error && data) {
+                        remoteContents = data;
+                        fetchSuccess = true;
+                    }
+                } catch (e) {
+                    console.log("Network content fetch failed, using local cache.");
+                }
             }
+
             const savedContents = localStorage.getItem('math_contents_v5_' + gradeId);
             const localContents = savedContents ? JSON.parse(savedContents) : [];
 
-            const mergedMap = new Map();
-            localContents.forEach(c => mergedMap.set(c.id, c));
-            remoteContents.forEach(c => mergedMap.set(c.id, c));
-            contents = Array.from(mergedMap.values());
+            if (fetchSuccess) {
+                contents = remoteContents;
+                safeLocalStorageSet('math_contents_v5_' + gradeId, JSON.stringify(contents));
+            } else {
+                const mergedMap = new Map();
+                localContents.forEach(c => mergedMap.set(c.id, c));
+                remoteContents.forEach(c => mergedMap.set(c.id, c));
+                contents = Array.from(mergedMap.values());
+            }
 
-            safeLocalStorageSet('math_contents_v5_' + gradeId, JSON.stringify(contents));
             renderContents();
         }
 
