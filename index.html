@@ -53,7 +53,7 @@
 
     <div id="app" class="flex-1 flex flex-col h-full overflow-hidden">
         
-        <!-- Minimized Top Navigation Bar -->
+        <!-- Top Navigation Bar -->
         <header class="bg-indigo-600 text-white shadow-sm z-20 flex justify-between items-center px-3 py-1.5 sm:px-5 flex-shrink-0">
             <div class="flex items-center gap-1.5">
                 <button id="back-to-dashboard-btn" onclick="deselectGrade()" class="hidden text-xs bg-white/20 hover:bg-white/30 text-white px-2 py-1 rounded-lg font-semibold transition-all flex items-center gap-1">
@@ -66,6 +66,16 @@
             </div>
             
             <div class="flex items-center gap-1.5">
+                <!-- Connection Status Indicator -->
+                <div id="sync-status-indicator" class="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span> <span id="sync-status-text">Online Sync</span>
+                </div>
+
+                <!-- Backup / Restore Sync Button -->
+                <button onclick="syncLocalToSupabaseBackup()" id="sync-backup-btn" class="hidden text-[10px] bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded-lg font-bold shadow transition-all animate-pulse flex items-center gap-1">
+                    ⚠️ Sync Backup
+                </button>
+                
                 <!-- Mode Switcher -->
                 <div class="bg-indigo-900/40 p-0.5 rounded-lg flex items-center border border-indigo-400/30">
                     <button onclick="requestTeacherMode()" id="btn-mode-teacher" class="px-2 py-0.5 rounded-md text-[11px] font-semibold transition-all text-indigo-100 hover:text-white">
@@ -113,9 +123,9 @@
                     <!-- Teacher Quick Actions -->
                     <div id="teacher-actions" class="flex items-center gap-1 hidden flex-wrap">
                         <button onclick="openEditGradeProfileModal()" class="btn-press bg-indigo-500 text-white px-2 py-1 rounded text-[10px] font-semibold">👤 Teacher</button>
-                        <button onclick="openAddContentModal('note')" class="btn-press bg-amber-500 text-white px-2 py-1 rounded text-[10px] font-semibold">📝 Note</button>
-                        <button onclick="openAddContentModal('reminder')" class="btn-press bg-rose-500 text-white px-2 py-1 rounded text-[10px] font-semibold">⏰ Reminder</button>
-                        <button onclick="openAddContentModal('link')" class="btn-press bg-blue-500 text-white px-2 py-1 rounded text-[10px] font-semibold">🔗 Link</button>
+                        <button onclick="openAddContentModal('note')" class="btn-press bg-amber-400 text-slate-900 px-2 py-1 rounded text-[10px] font-semibold">📝 Note</button>
+                        <button onclick="openAddContentModal('reminder')" class="btn-press bg-emerald-500 text-white px-2 py-1 rounded text-[10px] font-semibold">⏰ Reminder</button>
+                        <button onclick="openAddContentModal('link')" class="btn-press bg-sky-500 text-white px-2 py-1 rounded text-[10px] font-semibold">🔗 Link</button>
                         <button onclick="deleteActiveGrade()" class="btn-press bg-red-100 text-red-600 px-1.5 py-1 rounded text-[10px]">🗑️</button>
                     </div>
                 </div>
@@ -167,24 +177,24 @@
             <div class="p-4 space-y-3 overflow-y-auto flex-1 text-sm">
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Grade Name</label>
-                    <input type="text" id="input-grade-name" placeholder="e.g., Grade 7 Math" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="input-grade-name" placeholder="e.g., Grade 7 Math" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Description</label>
-                    <input type="text" id="input-grade-desc" placeholder="e.g., Algebra & Geometry" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="input-grade-desc" placeholder="e.g., Algebra & Geometry" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
                 </div>
                 <hr class="border-slate-100">
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Teacher Name</label>
-                    <input type="text" id="input-grade-teacher-name" placeholder="e.g., Mr. Smith" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="input-grade-teacher-name" placeholder="e.g., Mr. Smith" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Teacher Bio</label>
-                    <input type="text" id="input-grade-teacher-desc" placeholder="e.g., Math Lead Teacher" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="input-grade-teacher-desc" placeholder="e.g., Math Lead Teacher" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Teacher Photo</label>
-                    <input type="file" id="input-grade-teacher-photo-file" accept="image/*" onchange="handleTeacherPhotoUpload(event)" class="w-full text-xs text-slate-500">
+                    <input type="file" id="input-grade-teacher-photo-file" accept="image/*" onchange="compressImage(event, 'input-grade-teacher-photo-base64', 300)" class="w-full text-xs text-slate-500">
                     <input type="hidden" id="input-grade-teacher-photo-base64">
                 </div>
                 <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
@@ -211,7 +221,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Teacher Photo</label>
-                    <input type="file" id="edit-teacher-photo-file" accept="image/*" onchange="handleEditTeacherPhotoUpload(event)" class="w-full text-xs text-slate-500">
+                    <input type="file" id="edit-teacher-photo-file" accept="image/*" onchange="compressImage(event, 'edit-teacher-photo-base64', 300)" class="w-full text-xs text-slate-500">
                     <input type="hidden" id="edit-teacher-photo-base64">
                 </div>
                 <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
@@ -234,9 +244,16 @@
                     <input type="text" id="input-content-title" placeholder="Title..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
                 </div>
                 
+                <!-- Universal Thumbnail Photo Option (KB optimized) -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">🖼️ Thumbnail Photo (Optional KB-optimized)</label>
+                    <input type="file" id="input-thumb-file" accept="image/*" onchange="compressImage(event, 'input-thumb-base64', 400)" class="w-full text-xs text-slate-500">
+                    <input type="hidden" id="input-thumb-base64">
+                </div>
+                
                 <div id="field-container-note" class="content-field-group space-y-2">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Full Notes & Examples (Scrollable)</label>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Full Notes & Examples</label>
                         <textarea id="input-content-body" rows="4" placeholder="Write comprehensive notes, ideas, steps, and examples here..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm"></textarea>
                     </div>
                     <div>
@@ -272,11 +289,6 @@
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Description</label>
                         <textarea id="input-link-desc" rows="2" placeholder="Description..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm"></textarea>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Cover Photo</label>
-                        <input type="file" id="input-photo-file" accept="image/*" onchange="handleImageUpload(event)" class="w-full text-xs text-slate-500">
-                        <input type="hidden" id="input-photo-base64">
-                    </div>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
@@ -286,13 +298,13 @@
             </div>
         </div>
 
-        <!-- Read Content Full Viewer Modal (Clicking a card opens this) -->
+        <!-- Read Content Full Viewer Modal (Scrollable for students) -->
         <div id="modal-view-detail" class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden hidden max-h-[90vh] flex flex-col">
-            <div class="bg-indigo-600 text-white p-4 flex justify-between items-center flex-shrink-0">
+            <div id="detail-modal-header-bar" class="bg-indigo-600 text-white p-4 flex justify-between items-center flex-shrink-0">
                 <h3 id="detail-modal-title" class="text-base font-bold truncate">Note Details</h3>
                 <button onclick="closeModals()" class="text-indigo-200 hover:text-white font-bold text-lg">✕</button>
             </div>
-            <div id="detail-modal-body" class="p-4 space-y-3 overflow-y-auto flex-1 text-sm">
+            <div id="detail-modal-body" class="p-4 space-y-3 overflow-y-auto flex-1 text-sm bg-white">
                 <!-- Injected full content -->
             </div>
         </div>
@@ -323,8 +335,41 @@
 
         window.onload = async function() {
             await loadGrades();
+            setupRealtimeSubscriptions();
+            checkForUnsyncedLocalData();
             switchMode('student');
         };
+
+        // Realtime updates across devices
+        function setupRealtimeSubscriptions() {
+            if (!isSupabaseConnected || !supabaseClient) return;
+
+            try {
+                supabaseClient
+                    .channel('public-db-changes')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'grades' }, payload => {
+                        loadGrades();
+                    })
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'contents' }, payload => {
+                        if (activeGradeId) {
+                            loadContentsForGrade(activeGradeId);
+                        }
+                    })
+                    .subscribe((status) => {
+                        const indicator = document.getElementById('sync-status-indicator');
+                        const text = document.getElementById('sync-status-text');
+                        if (status === 'SUBSCRIBED') {
+                            indicator.className = "text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-medium flex items-center gap-1";
+                            text.textContent = "Live Synced";
+                        } else {
+                            indicator.className = "text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full font-medium flex items-center gap-1";
+                            text.textContent = "Syncing...";
+                        }
+                    });
+            } catch (e) {
+                console.log("Realtime not configured:", e);
+            }
+        }
 
         function requestTeacherMode() {
             if (currentMode === 'teacher') return;
@@ -368,35 +413,78 @@
         }
 
         async function loadGrades() {
+            let remoteGrades = [];
             if (isSupabaseConnected && supabaseClient) {
                 try {
                     const { data, error } = await supabaseClient.from('grades').select('*');
-                    if (!error && data) {
-                        grades = data;
-                        renderDashboardGrades();
-                        return;
-                    }
+                    if (!error && data) remoteGrades = data;
                 } catch (e) {}
             }
             const savedGrades = localStorage.getItem('math_grades_v3');
-            grades = savedGrades ? JSON.parse(savedGrades) : [];
+            const localGrades = savedGrades ? JSON.parse(savedGrades) : [];
+            
+            const mergedMap = new Map();
+            localGrades.forEach(g => mergedMap.set(g.id, g));
+            remoteGrades.forEach(g => mergedMap.set(g.id, g));
+            grades = Array.from(mergedMap.values());
+            
+            localStorage.setItem('math_grades_v3', JSON.stringify(grades));
             renderDashboardGrades();
         }
 
         async function loadContentsForGrade(gradeId) {
+            let remoteContents = [];
             if (isSupabaseConnected && supabaseClient) {
                 try {
                     const { data, error } = await supabaseClient.from('contents').select('*').eq('grade_id', gradeId);
-                    if (!error && data) {
-                        contents = data;
-                        renderContents();
-                        return;
-                    }
+                    if (!error && data) remoteContents = data;
                 } catch (e) {}
             }
             const savedContents = localStorage.getItem('math_contents_v3_' + gradeId);
-            contents = savedContents ? JSON.parse(savedContents) : [];
+            const localContents = savedContents ? JSON.parse(savedContents) : [];
+
+            const mergedMap = new Map();
+            localContents.forEach(c => mergedMap.set(c.id, c));
+            remoteContents.forEach(c => mergedMap.set(c.id, c));
+            contents = Array.from(mergedMap.values());
+
+            localStorage.setItem('math_contents_v3_' + gradeId, JSON.stringify(contents));
             renderContents();
+        }
+
+        function checkForUnsyncedLocalData() {
+            if (!isSupabaseConnected || !supabaseClient) return;
+            const savedGrades = localStorage.getItem('math_grades_v3');
+            if (savedGrades && JSON.parse(savedGrades).length > 0) {
+                document.getElementById('sync-backup-btn').classList.remove('hidden');
+            }
+        }
+
+        async function syncLocalToSupabaseBackup() {
+            if (!isSupabaseConnected || !supabaseClient) return;
+            const btn = document.getElementById('sync-backup-btn');
+            btn.textContent = "⏳ Uploading...";
+            try {
+                const savedGrades = localStorage.getItem('math_grades_v3');
+                if (savedGrades) {
+                    for (const g of JSON.parse(savedGrades)) {
+                        await supabaseClient.from('grades').upsert(g, { onConflict: 'id' });
+                    }
+                }
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('math_contents_v3_')) {
+                        for (const c of JSON.parse(localStorage.getItem(key) || '[]')) {
+                            await supabaseClient.from('contents').upsert(c, { onConflict: 'id' });
+                        }
+                    }
+                }
+                btn.textContent = "✅ Synced Online!";
+                setTimeout(() => btn.classList.add('hidden'), 3000);
+            } catch (err) {
+                btn.textContent = "⚠️ Sync Error";
+                alert("Sync failed: " + err.message);
+            }
         }
 
         function renderDashboardGrades() {
@@ -412,13 +500,14 @@
 
             gridEl.innerHTML = grades.map(g => `
                 <div onclick="selectGrade('${g.id}')" class="btn-press bg-white p-3.5 rounded-xl cursor-pointer transition-all border border-slate-200 shadow-sm hover:border-indigo-400 flex justify-between items-center group">
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-sm group-hover:text-indigo-600">${escapeHtml(g.name)}</h3>
-                        <p class="text-[11px] text-slate-500">${escapeHtml(g.description || 'Tap to view contents')}</p>
+                    <div class="flex items-center gap-3">
+                        ${g.teacherPhoto ? `<img src="${g.teacherPhoto}" class="w-9 h-9 rounded-full object-cover border border-slate-200">` : ''}
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm group-hover:text-indigo-600">${escapeHtml(g.name)}</h3>
+                            <p class="text-[11px] text-slate-500">${escapeHtml(g.description || 'Tap to view contents')}</p>
+                        </div>
                     </div>
-                    <div class="bg-indigo-50 group-hover:bg-indigo-600 group-hover:text-white text-indigo-600 w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm">
-                        ›
-                    </div>
+                    <div class="bg-indigo-50 group-hover:bg-indigo-600 group-hover:text-white text-indigo-600 w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm">›</div>
                 </div>
             `).join('');
         }
@@ -456,6 +545,7 @@
             renderDashboardGrades();
         }
 
+        // Renders note/reminder/link with distinct header/icon/badge colors per category (white cards background)
         function renderContents() {
             const container = document.getElementById('content-container');
             if (!activeGradeId) return;
@@ -473,33 +563,42 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-4xl mx-auto pb-6">
                     ${contents.map(item => {
                         let icon = '📝';
-                        let badgeColor = 'bg-amber-100 text-amber-700';
-                        if (item.type === 'reminder') { icon = '⏰'; badgeColor = 'bg-rose-100 text-rose-700'; }
-                        if (item.type === 'link') { icon = '🔗'; badgeColor = 'bg-blue-100 text-blue-700'; }
+                        let badgeStyle = 'bg-amber-100 text-amber-800 border-amber-200';
+                        let borderHover = 'hover:border-amber-400';
+                        
+                        if (item.type === 'reminder') {
+                            icon = '⏰';
+                            badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                            borderHover = 'hover:border-emerald-400';
+                        } else if (item.type === 'link') {
+                            icon = '🔗';
+                            badgeStyle = 'bg-sky-100 text-sky-800 border-sky-200';
+                            borderHover = 'hover:border-sky-400';
+                        }
 
-                        let snippet = '';
-                        if (item.type === 'note') snippet = item.body || (item.fileData ? '📄 Attached Document' : 'Tap to read full notes...');
-                        if (item.type === 'reminder') snippet = 'Due: ' + (item.dueDate ? new Date(item.dueDate).toLocaleString() : 'N/A');
-                        if (item.type === 'link') snippet = item.description || item.url;
+                        let oneLineSnippet = '';
+                        if (item.type === 'note') oneLineSnippet = item.body || (item.fileData ? 'Attached File' : 'Tap to read full notes...');
+                        if (item.type === 'reminder') oneLineSnippet = 'Due: ' + (item.dueDate ? new Date(item.dueDate).toLocaleString() : 'N/A');
+                        if (item.type === 'link') oneLineSnippet = item.description || item.url;
 
                         return `
-                            <div class="bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm p-3 flex flex-col justify-between hover:border-indigo-300 transition-colors">
-                                <div>
-                                    <div class="flex justify-between items-start gap-1 mb-1">
-                                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${badgeColor}">${icon} ${item.type}</span>${currentMode === 'teacher' ? `
-                                            <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
-                                                <button onclick="editContent('${item.id}')" class="text-slate-400 hover:text-indigo-600 text-[11px]">✏️</button>
-                                                <button onclick="deleteContent('${item.id}')" class="text-slate-300 hover:text-red-500 text-[11px]">🗑️</button>
-                                            </div>
-                                        ` : ''}
-                                    </div>
-                                    <div onclick="openDetailView('${item.id}')" class="cursor-pointer">
-                                        <h3 class="font-bold text-slate-800 text-xs sm:text-sm mb-0.5">${escapeHtml(item.title)}</h3>
-                                        <p class="text-slate-500 text-[11px] truncate">${escapeHtml(snippet)}</p>
+                            <div onclick="openDetailView('${item.id}')" class="btn-press bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm p-3 flex items-center justify-between gap-3 cursor-pointer ${borderHover} transition-colors">
+                                <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                    ${item.thumbnail ? `<img src="${item.thumbnail}" class="w-9 h-9 rounded-lg object-cover flex-shrink-0 border border-slate-200">` : ''}
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center gap-1.5 mb-0.5">
+                                            <span class="text-[9px] font-semibold px-2 py-0.5 rounded-md border ${badgeStyle}">${icon}${item.type.toUpperCase()}</span>
+                                        </div>
+                                        <h3 class="font-bold text-slate-800 text-xs truncate">${escapeHtml(item.title)}</h3>
+                                        <p class="text-slate-400 text-[11px] truncate">${escapeHtml(oneLineSnippet)}</p>
                                     </div>
                                 </div>
-                                <div class="mt-2 pt-1.5 border-t border-slate-100 flex justify-end">
-                                    <button onclick="openDetailView('${item.id}')" class="text-[11px] font-semibold text-indigo-600 hover:underline">Tap to view full notes & files →</button>
+                                <div class="flex items-center gap-1 flex-shrink-0" onclick="event.stopPropagation()">
+                                    ${currentMode === 'teacher' ? `
+                                        <button onclick="editContent('${item.id}')" class="text-slate-400 hover:text-indigo-600 text-[11px] p-1">✏️</button>
+                                        <button onclick="deleteContent('${item.id}')" class="text-slate-300 hover:text-red-500 text-[11px] p-1">🗑️</button>
+                                    ` : ''}
+                                    <span class="text-slate-300 text-xs">›</span>
                                 </div>
                             </div>
                         `;
@@ -508,50 +607,60 @@
             `;
         }
 
+        // Full Viewer modal where students can scroll down to read everything
         function openDetailView(id) {
             const item = contents.find(c => c.id === id);
             if (!item) return;
 
             document.getElementById('detail-modal-title').textContent = item.title;
+            
+            // Apply category header color in detail modal header
+            const headerBar = document.getElementById('detail-modal-header-bar');
+            if (item.type === 'reminder') {
+                headerBar.className = "bg-emerald-600 text-white p-4 flex justify-between items-center flex-shrink-0";
+            } else if (item.type === 'link') {
+                headerBar.className = "bg-sky-600 text-white p-4 flex justify-between items-center flex-shrink-0";
+            } else {
+                headerBar.className = "bg-amber-500 text-slate-900 p-4 flex justify-between items-center flex-shrink-0";
+            }
+
             const bodyEl = document.getElementById('detail-modal-body');
 
             let contentHtml = '';
             if (item.type === 'note') {
                 contentHtml = `
                     <div class="space-y-3">
-                        ${item.body ? `<div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-slate-700 whitespace-pre-line text-sm leading-relaxed">${escapeHtml(item.body)}</div>` : ''}
+                        ${item.thumbnail ? `<img src="${item.thumbnail}" class="w-full h-48 object-cover rounded-xl border border-slate-100">` : ''}
+                        ${item.body ? `<div class="bg-amber-50/50 p-3 rounded-xl border border-amber-100 text-slate-700 whitespace-pre-line text-sm leading-relaxed">${escapeHtml(item.body)}</div>` : ''}
                         
                         ${item.fileData ? `
-                            <div class="p-3 bg-indigo-50 border border-indigo-100 rounded-xl space-y-2">
+                            <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-indigo-900">📄 Attached Learning File</span>
-                                    <a href="${item.fileData}" download="${escapeHtml(item.fileName || 'document')}" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-medium inline-flex items-center gap-1 shadow-sm">📥 Download File</a>
+                                    <span class="text-xs font-bold text-amber-900">📄 Attached Learning File</span>
+                                    <a href="${item.fileData}" download="${escapeHtml(item.fileName || 'document')}" class="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg font-medium inline-flex items-center gap-1 shadow-sm">📥 Download File</a>
                                 </div>
                                 ${item.fileType && item.fileType.includes('image') ? `<img src="${item.fileData}" class="max-h-64 rounded-lg mx-auto">` : ''}
-                                ${item.fileType && item.fileType.includes('pdf') ? `<iframe src="${item.fileData}" class="w-full h-80 rounded border border-indigo-200 bg-white"></iframe>` : ''}
+                                ${item.fileType && item.fileType.includes('pdf') ? `<iframe src="${item.fileData}" class="w-full h-80 rounded border border-amber-200 bg-white"></iframe>` : ''}
                             </div>
                         ` : ''}
 
-                        ${item.customHtml ? `
-                            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl overflow-x-auto">
-                                ${item.customHtml}
-                            </div>
-                        ` : ''}
+                        ${item.customHtml ? `<div class="p-3 bg-slate-50 border border-slate-200 rounded-xl overflow-x-auto">${item.customHtml}</div>` : ''}
                     </div>
                 `;
             } else if (item.type === 'reminder') {
                 contentHtml = `
-                    <div class="bg-rose-50 border border-rose-100 p-4 rounded-xl space-y-2">
-                        <p class="text-xs font-bold text-rose-700">📅 Due Date: ${item.dueDate ? new Date(item.dueDate).toLocaleString() : 'N/A'}</p>
+                    <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-xl space-y-2">
+                        ${item.thumbnail ? `<img src="${item.thumbnail}" class="w-full h-40 object-cover rounded-xl border border-slate-100 mb-2">` : ''}
+                        <p class="text-xs font-bold text-emerald-800">📅 Due Date: ${item.dueDate ? new Date(item.dueDate).toLocaleString() : 'N/A'}</p>
                         <p class="text-slate-700 text-sm whitespace-pre-line">${escapeHtml(item.body || '')}</p>
                     </div>
                 `;
             } else if (item.type === 'link') {
                 contentHtml = `
                     <div class="space-y-3">
-                        ${item.photo ? `<img src="${item.photo}" class="w-full h-40 object-cover rounded-xl border border-slate-100">` : ''}
+                        ${item.thumbnail ? `<img src="${item.thumbnail}" class="w-full h-40 object-cover rounded-xl border border-slate-100">` : ''}
                         <p class="text-slate-600 text-sm">${escapeHtml(item.description || '')}</p>
-                        <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium text-xs inline-flex items-center gap-1.5 shadow-sm">🌐 Open External Website ↗</a>
+                        <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="bg-sky-600 text-white px-4 py-2.5 rounded-xl font-medium text-xs inline-flex items-center gap-1.5 shadow-sm">🌐 Open External Website ↗</a>
                     </div>
                 `;
             }
@@ -589,10 +698,10 @@
             const photoB64 = document.getElementById('edit-teacher-photo-base64').value;
             if (photoB64) grade.teacherPhoto = photoB64;
 
-            if (isSupabaseConnected && supabaseClient) {
-                try { await supabaseClient.from('grades').update(grade).eq('id', activeGradeId); } catch (e) {}
-            }
             localStorage.setItem('math_grades_v3', JSON.stringify(grades));
+            if (isSupabaseConnected && supabaseClient) {
+                await supabaseClient.from('grades').upsert(grade, { onConflict: 'id' });
+            }
             closeModals();
             selectGrade(activeGradeId);
         }
@@ -608,12 +717,27 @@
             document.getElementById('field-container-reminder').classList.add('hidden');
             document.getElementById('field-container-link').classList.add('hidden');
 
+            const modalHeader = document.getElementById('content-modal-header');
             const titleEl = document.getElementById('content-modal-title');
-            if (type === 'note') { titleEl.textContent = "Add Note & File"; document.getElementById('field-container-note').classList.remove('hidden'); }
-            else if (type === 'reminder') { titleEl.textContent = "Add Reminder"; document.getElementById('field-container-reminder').classList.remove('hidden'); }
-            else if (type === 'link') { titleEl.textContent = "Add Link"; document.getElementById('field-container-link').classList.remove('hidden'); }
+            
+            if (type === 'note') { 
+                titleEl.textContent = "Add Note"; 
+                modalHeader.className = "bg-amber-400 text-slate-900 p-4 flex justify-between items-center flex-shrink-0";
+                document.getElementById('field-container-note').classList.remove('hidden'); 
+            }
+            else if (type === 'reminder') { 
+                titleEl.textContent = "Add Reminder"; 
+                modalHeader.className = "bg-emerald-600 text-white p-4 flex justify-between items-center flex-shrink-0";
+                document.getElementById('field-container-reminder').classList.remove('hidden'); 
+            }
+            else if (type === 'link') { 
+                titleEl.textContent = "Add Link"; 
+                modalHeader.className = "bg-sky-600 text-white p-4 flex justify-between items-center flex-shrink-0";
+                document.getElementById('field-container-link').classList.remove('hidden'); 
+            }
             
             document.getElementById('input-content-title').value = '';
+            document.getElementById('input-thumb-base64').value = '';
             document.getElementById('input-content-body').value = '';
             document.getElementById('input-material-file-data').value = '';
             document.getElementById('input-material-file-type').value = '';
@@ -630,8 +754,8 @@
             if (!item) return;
             openAddContentModal(item.type);
             document.getElementById('input-edit-id').value = item.id;
-            document.getElementById('content-modal-title').textContent = "Edit Content";
             document.getElementById('input-content-title').value = item.title || '';
+            document.getElementById('input-thumb-base64').value = item.thumbnail || '';
 
             if (item.type === 'note') {
                 document.getElementById('input-content-body').value = item.body || '';
@@ -674,11 +798,13 @@
                 teacherPhoto: teacherPhoto || 'https://placehold.co/150/4f46e5/ffffff?text=TC'
             };
 
-            if (isSupabaseConnected && supabaseClient) {
-                try { await supabaseClient.from('grades').insert([newGrade]); } catch (e) {}
-            }
             grades.push(newGrade);
             localStorage.setItem('math_grades_v3', JSON.stringify(grades));
+
+            if (isSupabaseConnected && supabaseClient) {
+                await supabaseClient.from('grades').upsert(newGrade, { onConflict: 'id' });
+            }
+
             closeModals();
             selectGrade(newGrade.id);
         }
@@ -687,7 +813,7 @@
             if (!confirm("Delete this grade?")) return;
             const id = activeGradeId;
             if (isSupabaseConnected && supabaseClient) {
-                try { await supabaseClient.from('grades').delete().eq('id', id); } catch (e) {}
+                await supabaseClient.from('grades').delete().eq('id', id);
             }
             grades = grades.filter(g => g.id !== id);
             localStorage.setItem('math_grades_v3', JSON.stringify(grades));
@@ -705,6 +831,7 @@
                 grade_id: activeGradeId,
                 type: currentContentType,
                 title: title,
+                thumbnail: document.getElementById('input-thumb-base64').value || (existingItem ? existingItem.thumbnail : ''),
                 body: currentContentType === 'note' ? document.getElementById('input-content-body').value : (currentContentType === 'reminder' ? document.getElementById('input-reminder-body').value : ''),
                 fileData: currentContentType === 'note' ? document.getElementById('input-material-file-data').value || (existingItem ? existingItem.fileData : '') : '',
                 fileType: currentContentType === 'note' ? document.getElementById('input-material-file-type').value || (existingItem ? existingItem.fileType : '') : '',
@@ -712,21 +839,18 @@
                 customHtml: currentContentType === 'note' ? document.getElementById('input-custom-html').value : '',
                 dueDate: currentContentType === 'reminder' ? document.getElementById('input-reminder-date').value : '',
                 url: currentContentType === 'link' ? document.getElementById('input-content-url').value : '',
-                description: currentContentType === 'link' ? document.getElementById('input-link-desc').value : '',
-                photo: existingItem ? existingItem.photo : ''
+                description: currentContentType === 'link' ? document.getElementById('input-link-desc').value : ''
             };
-
-            if (isSupabaseConnected && supabaseClient) {
-                try {
-                    if (editId) await supabaseClient.from('contents').update(updatedItem).eq('id', editId);
-                    else await supabaseClient.from('contents').insert([updatedItem]);
-                } catch (e) {}
-            }
 
             if (editId) contents = contents.map(c => c.id === editId ? updatedItem : c);
             else contents.push(updatedItem);
 
             localStorage.setItem('math_contents_v3_' + activeGradeId, JSON.stringify(contents));
+
+            if (isSupabaseConnected && supabaseClient) {
+                await supabaseClient.from('contents').upsert(updatedItem, { onConflict: 'id' });
+            }
+
             closeModals();
             renderContents();
         }
@@ -734,34 +858,37 @@
         async function deleteContent(id) {
             if (!confirm("Delete item?")) return;
             if (isSupabaseConnected && supabaseClient) {
-                try { await supabaseClient.from('contents').delete().eq('id', id); } catch (e) {}
+                await supabaseClient.from('contents').delete().eq('id', id);
             }
             contents = contents.filter(c => c.id !== id);
             localStorage.setItem('math_contents_v3_' + activeGradeId, JSON.stringify(contents));
             renderContents();
         }
 
-        function handleTeacherPhotoUpload(event) {
+        // Compresses uploaded images down to KB scale automatically
+        function compressImage(event, targetInputId, maxWidth = 400) {
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) { document.getElementById('input-grade-teacher-photo-base64').value = e.target.result; }
-            reader.readAsDataURL(file);
-        }
-
-        function handleEditTeacherPhotoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) { document.getElementById('edit-teacher-photo-base64').value = e.target.result; }
-            reader.readAsDataURL(file);
-        }
-
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) { document.getElementById('input-photo-base64').value = e.target.result; }
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    document.getElementById(targetInputId).value = compressedBase64;
+                }
+                img.src = e.target.result;
+            }
             reader.readAsDataURL(file);
         }
 
