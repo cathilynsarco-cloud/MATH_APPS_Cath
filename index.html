@@ -49,12 +49,12 @@
         }
     </style>
 </head>
-<body class="h-full flex flex-col text-slate-800 bg-slate-50">
+<body class="h-full flex flex-col text-slate-800 bg-slate-50 overflow-hidden">
 
     <div id="app" class="flex-1 flex flex-col h-full overflow-hidden">
         
         <!-- Top Navigation Bar -->
-        <header class="bg-indigo-600 text-white shadow-md z-20 flex justify-between items-center px-4 py-3 sm:px-6">
+        <header class="bg-indigo-600 text-white shadow-md z-20 flex justify-between items-center px-4 py-3 sm:px-6 flex-shrink-0">
             <div class="flex items-center gap-3">
                 <div class="bg-white/10 p-2 rounded-xl text-2xl">📐</div>
                 <div>
@@ -79,10 +79,10 @@
         <!-- Main Content Area -->
         <main class="flex-1 overflow-hidden flex flex-col md:flex-row relative">
             
-            <!-- Sidebar: Grade Levels -->
-            <aside class="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col z-10 shadow-sm">
-                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <h2 class="font-bold text-slate-700 text-sm uppercase tracking-wider flex items-center gap-2">
+            <!-- Sidebar: Grade Levels (Compact on mobile so content gets 3/4+ space) -->
+            <aside class="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col z-10 shadow-sm flex-shrink-0">
+                <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <h2 class="font-bold text-slate-700 text-xs uppercase tracking-wider flex items-center gap-2">
                         <span>📚</span> Grade Levels
                     </h2>
                     <button onclick="openAddGradeModal()" id="teacher-add-grade-btn" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-1 hidden">
@@ -90,13 +90,13 @@
                     </button>
                 </div>
 
-                <!-- Grade List -->
-                <div id="grade-list" class="flex-1 overflow-y-auto p-3 space-y-2">
-                    <div class="p-4 text-center text-slate-400 text-sm">Loading grades...</div>
+                <!-- Grade List (Scrollable on mobile up to max-h-36, full height on desktop) -->
+                <div id="grade-list" class="max-h-36 md:max-h-none overflow-y-auto p-2.5 space-y-1.5 bg-slate-50/30">
+                    <div class="p-3 text-center text-slate-400 text-xs">Loading grades...</div>
                 </div>
 
                 <!-- Sync Status Badge -->
-                <div class="p-3 border-t border-slate-100 bg-slate-50 text-xs text-slate-500 flex items-center justify-between">
+                <div class="px-3 py-2 border-t border-slate-100 bg-slate-50 text-xs text-slate-500 flex items-center justify-between">
                     <span id="sync-status" class="flex items-center gap-1.5 text-indigo-600 font-medium">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Supabase Connected
                     </span>
@@ -104,14 +104,14 @@
                 </div>
             </aside>
 
-            <!-- Content View Area -->
+            <!-- Content View Area (Takes remaining 3/4+ vertical space on mobile and fills rest on desktop) -->
             <section class="flex-1 flex flex-col overflow-hidden bg-slate-50">
                 
                 <!-- Grade Header Bar -->
-                <div id="active-grade-header" class="bg-white border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-sm">
+                <div id="active-grade-header" class="bg-white border-b border-slate-200 px-6 py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-sm flex-shrink-0">
                     <div>
                         <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-full uppercase tracking-wider">Active Level</span>
-                        <h2 id="current-grade-title" class="text-2xl font-bold text-slate-800 mt-1">Select a Grade Level</h2>
+                        <h2 id="current-grade-title" class="text-xl sm:text-2xl font-bold text-slate-800 mt-1">Select a Grade Level</h2>
                     </div>
                     
                     <!-- Teacher Quick Actions -->
@@ -126,24 +126,24 @@
                             ⏰ Add Reminder
                         </button>
                         <button onclick="openAddContentModal('link')" class="btn-press bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-1.5">
-                            🔗 Add Link with Preview Photo
+                            🔗 Add Link with Preview
                         </button>
                     </div>
                 </div>
 
-                <!-- Teacher Profile Banner (Shown inside active grade) -->
-                <div id="teacher-profile-banner" class="hidden bg-gradient-to-r from-indigo-900 to-indigo-800 text-white px-6 py-4 shadow-inner flex items-center gap-4">
-                    <img id="banner-teacher-photo" src="https://placehold.co/100" alt="Teacher" class="w-14 h-14 rounded-full object-cover border-2 border-indigo-300 shadow-md">
+                <!-- Teacher Profile Banner -->
+                <div id="teacher-profile-banner" class="hidden bg-gradient-to-r from-indigo-900 to-indigo-800 text-white px-6 py-3 shadow-inner flex items-center gap-4 flex-shrink-0">
+                    <img id="banner-teacher-photo" src="https://placehold.co/100" alt="Teacher" class="w-12 h-12 rounded-full object-cover border-2 border-indigo-300 shadow-md">
                     <div>
                         <div class="flex items-center gap-2">
-                            <h3 id="banner-teacher-name" class="font-bold text-lg">Teacher Name</h3>
-                            <span class="text-xs bg-indigo-700/60 text-indigo-200 px-2 py-0.5 rounded-full">Instructor</span>
+                            <h3 id="banner-teacher-name" class="font-bold text-base">Teacher Name</h3>
+                            <span class="text-[10px] bg-indigo-700/60 text-indigo-200 px-2 py-0.5 rounded-full">Instructor</span>
                         </div>
-                        <p id="banner-teacher-desc" class="text-xs text-indigo-200 mt-0.5">Teacher description and contact details goes here...</p>
+                        <p id="banner-teacher-desc" class="text-xs text-indigo-200 mt-0.5 truncate max-w-md">Teacher description...</p>
                     </div>
                 </div>
 
-                <!-- Content Feed Grid -->
+                <!-- Content Feed Grid (Scrollable Main Area) -->
                 <div class="flex-1 overflow-y-auto p-4 sm:p-6" id="content-container">
                     <div class="flex flex-col items-center justify-center h-64 text-center">
                         <div class="text-5xl mb-3">👈</div>
@@ -179,19 +179,19 @@
         </div>
 
         <!-- Add Grade Modal -->
-        <div id="modal-add-grade" class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden hidden transform transition-all">
-            <div class="bg-indigo-600 text-white p-5 flex justify-between items-center">
+        <div id="modal-add-grade" class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden hidden transform transition-all max-h-[90vh] flex flex-col">
+            <div class="bg-indigo-600 text-white p-5 flex justify-between items-center flex-shrink-0">
                 <h3 class="text-xl font-bold">Add New Grade Level</h3>
                 <button onclick="closeModals()" class="text-indigo-200 hover:text-white text-xl font-bold">✕</button>
             </div>
-            <div class="p-6 space-y-4">
+            <div class="p-6 space-y-3 overflow-y-auto flex-1">
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Grade Name</label>
-                    <input type="text" id="input-grade-name" placeholder="e.g., 7th Grade Math" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="input-grade-name" placeholder="e.g., 7th Grade Math" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Description / Topic Focus</label>
-                    <input type="text" id="input-grade-desc" placeholder="e.g., Pre-Algebra & Equations" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="input-grade-desc" placeholder="e.g., Pre-Algebra & Equations" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
                 </div>
                 <hr class="border-slate-100 my-2">
                 <h4 class="font-bold text-slate-700 text-sm">Teacher Profile for this Grade</h4>
@@ -208,9 +208,9 @@
                     <input type="file" id="input-grade-teacher-photo-file" accept="image/*" onchange="handleTeacherPhotoUpload(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700">
                     <input type="hidden" id="input-grade-teacher-photo-base64">
                 </div>
-                <div class="pt-2 flex justify-end gap-3">
-                    <button onclick="closeModals()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium">Cancel</button>
-                    <button onclick="saveNewGrade()" class="btn-press px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-md">Create Grade</button>
+                <div class="pt-2 flex justify-end gap-3 border-t border-slate-100">
+                    <button onclick="closeModals()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium text-sm">Cancel</button>
+                    <button onclick="saveNewGrade()" class="btn-press px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-md text-sm">Create Grade</button>
                 </div>
             </div>
         </div>
@@ -224,11 +224,11 @@
             <div class="p-6 space-y-4">
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Teacher Name</label>
-                    <input type="text" id="edit-teacher-name" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="edit-teacher-name" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Teacher Description / Bio</label>
-                    <input type="text" id="edit-teacher-desc" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="edit-teacher-desc" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Teacher Photo</label>
@@ -236,15 +236,15 @@
                     <input type="hidden" id="edit-teacher-photo-base64">
                 </div>
                 <div class="pt-2 flex justify-end gap-3">
-                    <button onclick="closeModals()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium">Cancel</button>
-                    <button onclick="saveTeacherProfile()" class="btn-press px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-md">Save Profile</button>
+                    <button onclick="closeModals()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium text-sm">Cancel</button>
+                    <button onclick="saveTeacherProfile()" class="btn-press px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-md text-sm">Save Profile</button>
                 </div>
             </div>
         </div>
 
         <!-- Add/Edit Content Modal -->
         <div id="modal-add-content" class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden hidden transform transition-all max-h-[90vh] flex flex-col">
-            <div id="content-modal-header" class="bg-indigo-600 text-white p-5 flex justify-between items-center">
+            <div id="content-modal-header" class="bg-indigo-600 text-white p-5 flex justify-between items-center flex-shrink-0">
                 <h3 id="content-modal-title" class="text-xl font-bold">Add Content</h3>
                 <button onclick="closeModals()" class="text-indigo-200 hover:text-white text-xl font-bold">✕</button>
             </div>
@@ -252,14 +252,14 @@
                 <input type="hidden" id="input-edit-id">
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Title</label>
-                    <input type="text" id="input-content-title" placeholder="e.g., Chapter 1 Review Material" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="input-content-title" placeholder="e.g., Chapter 1 Review Material" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
                 </div>
                 
                 <!-- Note & Material Field Group -->
                 <div id="field-container-note" class="content-field-group space-y-3">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Note Text / Explanation</label>
-                        <textarea id="input-content-body" rows="4" placeholder="Write lesson notes, formulas, or instructions here..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 font-sans text-sm"></textarea>
+                        <textarea id="input-content-body" rows="3" placeholder="Write lesson notes, formulas, or instructions here..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 font-sans text-sm"></textarea>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Upload Learning Material (PDF, Photo, or HTML file)</label>
@@ -270,7 +270,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Or Paste Custom HTML / Embed Code</label>
-                        <textarea id="input-custom-html" rows="3" placeholder="&lt;iframe src='...'&gt;&lt;/iframe&gt; or custom HTML markup..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs"></textarea>
+                        <textarea id="input-custom-html" rows="2" placeholder="&lt;iframe src='...'&gt;&lt;/iframe&gt; or custom HTML markup..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs"></textarea>
                     </div>
                 </div>
 
@@ -278,7 +278,7 @@
                 <div id="field-container-reminder" class="content-field-group hidden space-y-3">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Due Date & Time</label>
-                        <input type="datetime-local" id="input-reminder-date" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                        <input type="datetime-local" id="input-reminder-date" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Reminder Details</label>
@@ -290,7 +290,7 @@
                 <div id="field-container-link" class="content-field-group hidden space-y-4">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">External Website URL (Google, YouTube, etc.)</label>
-                        <input type="url" id="input-content-url" placeholder="https://www.youtube.com/watch?v=..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                        <input type="url" id="input-content-url" placeholder="https://www.youtube.com/watch?v=..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Details / Description</label>
@@ -309,9 +309,9 @@
                     </div>
                 </div>
 
-                <div class="pt-2 flex justify-end gap-3 border-t border-slate-100">
-                    <button onclick="closeModals()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium">Cancel</button>
-                    <button onclick="saveNewContent()" class="btn-press px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-md">Save Content</button>
+                <div class="pt-2 flex justify-end gap-3 border-t border-slate-100 flex-shrink-0">
+                    <button onclick="closeModals()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium text-sm">Cancel</button>
+                    <button onclick="saveNewContent()" class="btn-press px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-md text-sm">Save Content</button>
                 </div>
             </div>
         </div>
@@ -334,7 +334,6 @@
             }
         } catch (err) {}
 
-        // --- APPLICATION STATE (Defaults to Student View) ---
         let currentMode = 'student';
         let grades = [];
         let activeGradeId = null;
@@ -418,13 +417,14 @@
         async function testSupabaseConnection() {
             const statusEl = document.getElementById('sync-status');
             if (!isSupabaseConnected || !supabaseClient) {
-                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> Local Mode';
+                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> Local Mode (No SDK)';
                 return;
             }
             try {
                 const { data, error } = await supabaseClient.from('grades').select('id').limit(1);
                 if (error) {
-                    statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500"></span> Using Local Storage Fallback';
+                    console.warn("Supabase connection warning:", error.message);
+                    statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> Check Table RLS / Schema';
                 } else {
                     statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Supabase Connected';
                 }
@@ -443,7 +443,9 @@
                         renderGrades();
                         return;
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.error("Error loading grades from Supabase:", e);
+                }
             }
             
             const savedGrades = localStorage.getItem('math_grades_v3');
@@ -461,7 +463,9 @@
                         renderContents();
                         return;
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.error("Error loading contents from Supabase:", e);
+                }
             }
             
             if (!defaultContents[gradeId]) defaultContents[gradeId] = [];
@@ -537,16 +541,15 @@
         function renderGrades() {
             const listEl = document.getElementById('grade-list');
             if (!grades || grades.length === 0) {
-                listEl.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm">No grade levels added yet.</div>`;
+                listEl.innerHTML = `<div class="p-3 text-center text-slate-400 text-xs">No grade levels added yet.</div>`;
                 return;
             }
 
             listEl.innerHTML = grades.map(g => `
-                <div onclick="selectGrade('${g.id}')" class="p-3.5 rounded-2xl cursor-pointer transition-all border ${activeGradeId === g.id ? 'bg-indigo-50 border-indigo-300 shadow-sm' : 'bg-white border-slate-100 hover:bg-slate-50'} flex justify-between items-center group">
+                <div onclick="selectGrade('${g.id}')" class="p-3 rounded-xl cursor-pointer transition-all border ${activeGradeId === g.id ? 'bg-indigo-50 border-indigo-300 shadow-sm' : 'bg-white border-slate-100 hover:bg-slate-50'} flex justify-between items-center group">
                     <div>
-                        <h4 class="font-bold text-slate-800 text-sm">${escapeHtml(g.name)}</h4>
-                        <!-- Mobile & Student dashboard shows clean grade level focus -->
-                        <p class="text-xs text-slate-500 truncate max-w-[180px]">${escapeHtml(g.description || '')}</p>
+                        <h4 class="font-bold text-slate-800 text-xs sm:text-sm">${escapeHtml(g.name)}</h4>
+                        <p class="text-[11px] text-slate-500 truncate max-w-[160px] sm:max-w-[200px]">${escapeHtml(g.description || '')}</p>
                     </div>
                     ${currentMode === 'teacher' ? `
                         <button onclick="event.stopPropagation(); deleteGrade('${g.id}')" class="text-slate-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity">🗑️</button>
@@ -561,7 +564,6 @@
             if (grade) {
                 document.getElementById('current-grade-title').textContent = grade.name;
                 
-                // Update Teacher Profile Banner
                 if (grade.teacherName || grade.teacherBio || grade.teacherPhoto) {
                     document.getElementById('banner-teacher-name').textContent = grade.teacherName || 'Instructor';
                     document.getElementById('banner-teacher-desc').textContent = grade.teacherBio || grade.description;
@@ -691,8 +693,11 @@
 
             if (isSupabaseConnected && supabaseClient) {
                 try {
-                    await supabaseClient.from('grades').update(grade).eq('id', activeGradeId);
-                } catch (e) {}
+                    const { error } = await supabaseClient.from('grades').update(grade).eq('id', activeGradeId);
+                    if (error) console.error("Supabase profile update error:", error.message);
+                } catch (e) {
+                    console.error("Supabase profile update exception:", e);
+                }
             }
 
             localStorage.setItem('math_grades_v3', JSON.stringify(grades));
@@ -794,8 +799,11 @@
 
             if (isSupabaseConnected && supabaseClient) {
                 try {
-                    await supabaseClient.from('grades').insert([newGrade]);
-                } catch (e) {}
+                    const { error } = await supabaseClient.from('grades').insert([newGrade]);
+                    if (error) console.error("Supabase grade insert error:", error.message);
+                } catch (e) {
+                    console.error("Supabase grade insert exception:", e);
+                }
             }
 
             grades.push(newGrade);
@@ -809,8 +817,11 @@
             if (!confirm("Are you sure you want to delete this grade level?")) return;
             if (isSupabaseConnected && supabaseClient) {
                 try {
-                    await supabaseClient.from('grades').delete().eq('id', id);
-                } catch (e) {}
+                    const { error } = await supabaseClient.from('grades').delete().eq('id', id);
+                    if (error) console.error("Supabase grade delete error:", error.message);
+                } catch (e) {
+                    console.error("Supabase grade delete exception:", e);
+                }
             }
             grades = grades.filter(g => g.id !== id);
             localStorage.setItem('math_grades_v3', JSON.stringify(grades));
@@ -851,12 +862,18 @@
 
             if (isSupabaseConnected && supabaseClient) {
                 try {
+                    let error;
                     if (editId) {
-                        await supabaseClient.from('contents').update(updatedItem).eq('id', editId);
+                        const res = await supabaseClient.from('contents').update(updatedItem).eq('id', editId);
+                        error = res.error;
                     } else {
-                        await supabaseClient.from('contents').insert([updatedItem]);
+                        const res = await supabaseClient.from('contents').insert([updatedItem]);
+                        error = res.error;
                     }
-                } catch (e) {}
+                    if (error) console.error("Supabase content save error:", error.message);
+                } catch (e) {
+                    console.error("Supabase content save exception:", e);
+                }
             }
 
             if (editId) {
@@ -874,8 +891,11 @@
             if (!confirm("Delete this content item?")) return;
             if (isSupabaseConnected && supabaseClient) {
                 try {
-                    await supabaseClient.from('contents').delete().eq('id', id);
-                } catch (e) {}
+                    const { error } = await supabaseClient.from('contents').delete().eq('id', id);
+                    if (error) console.error("Supabase content delete error:", error.message);
+                } catch (e) {
+                    console.error("Supabase content delete exception:", e);
+                }
             }
             contents = contents.filter(c => c.id !== id);
             localStorage.setItem('math_contents_v3_' + activeGradeId, JSON.stringify(contents));
