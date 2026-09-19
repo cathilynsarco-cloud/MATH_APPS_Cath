@@ -66,11 +66,6 @@
             </div>
             
             <div class="flex items-center gap-1.5">
-                <!-- Backup / Restore Sync Button -->
-                <button onclick="syncLocalToSupabaseBackup()" id="sync-backup-btn" class="hidden text-[10px] bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded-lg font-bold shadow transition-all animate-pulse flex items-center gap-1">
-                    ⚠️ Restore Local Backup Online
-                </button>
-                
                 <!-- Mode Switcher -->
                 <div class="bg-indigo-900/40 p-0.5 rounded-lg flex items-center border border-indigo-400/30">
                     <button onclick="requestTeacherMode()" id="btn-mode-teacher" class="px-2 py-0.5 rounded-md text-[11px] font-semibold transition-all text-indigo-100 hover:text-white">
@@ -86,7 +81,7 @@
         <!-- Main Content Area -->
         <main class="flex-1 overflow-hidden flex flex-col relative bg-slate-50">
             
-            <!-- VIEW 1: Grade Level Dashboard -->
+            <!-- VIEW 1: Grade Level Dashboard (Only shows Grades) -->
             <div id="view-dashboard" class="flex-1 overflow-y-auto p-3 sm:p-8 flex flex-col">
                 <div class="max-w-4xl mx-auto w-full flex-1 flex flex-col">
                     <div class="flex justify-between items-center mb-4">
@@ -108,10 +103,10 @@
                 </div>
             </div>
 
-            <!-- VIEW 2: Active Grade Content Feed -->
+            <!-- VIEW 2: Active Grade Content Feed (Maximized for Mobile View) -->
             <div id="view-grade-content" class="flex-1 flex flex-col overflow-hidden hidden">
                 
-                <!-- Active Grade Header -->
+                <!-- Active Grade Header (Minimized) -->
                 <div class="bg-white border-b border-slate-200 px-3 py-2 flex justify-between items-center gap-2 shadow-sm flex-shrink-0">
                     <h2 id="current-grade-title" class="text-sm sm:text-xl font-bold text-slate-800 truncate">Grade Title</h2>
                     
@@ -125,7 +120,7 @@
                     </div>
                 </div>
 
-                <!-- Teacher Profile Banner -->
+                <!-- Teacher Profile Banner (Ultra Compact) -->
                 <div id="teacher-profile-banner" class="hidden bg-indigo-900 text-white px-3 py-1.5 flex items-center gap-2 flex-shrink-0">
                     <img id="banner-teacher-photo" src="https://placehold.co/80" alt="Teacher" class="w-7 h-7 rounded-full object-cover border border-indigo-300">
                     <div class="truncate">
@@ -134,7 +129,7 @@
                     </div>
                 </div>
 
-                <!-- Content Feed Grid -->
+                <!-- Content Feed Grid (Optimized to maximize mobile view space) -->
                 <div class="flex-1 overflow-y-auto p-2 sm:p-6" id="content-container">
                     <!-- Dynamic Content Cards Inserted Here -->
                 </div>
@@ -241,15 +236,14 @@
                 
                 <div id="field-container-note" class="content-field-group space-y-2">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Full Notes & Examples (Scrollable)</label>
-                        <textarea id="input-content-body" rows="4" placeholder="Write comprehensive notes, ideas, steps, and examples here..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm"></textarea>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Note Text</label>
+                        <textarea id="input-content-body" rows="2" placeholder="Notes..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm"></textarea>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Upload File / PDF Document</label>
-                        <input type="file" id="input-material-file" accept=".pdf,image/*,.html,.htm,.doc,.docx" onchange="handleMaterialFileUpload(event)" class="w-full text-xs text-slate-500">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Upload File (PDF/Image/HTML)</label>
+                        <input type="file" id="input-material-file" accept=".pdf,image/*,.html,.htm" onchange="handleMaterialFileUpload(event)" class="w-full text-xs text-slate-500">
                         <input type="hidden" id="input-material-file-data">
                         <input type="hidden" id="input-material-file-type">
-                        <input type="hidden" id="input-material-file-name">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Custom HTML / Embed</label>
@@ -291,17 +285,6 @@
             </div>
         </div>
 
-        <!-- Read Content Full Viewer Modal -->
-        <div id="modal-view-detail" class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden hidden max-h-[90vh] flex flex-col">
-            <div class="bg-indigo-600 text-white p-4 flex justify-between items-center flex-shrink-0">
-                <h3 id="detail-modal-title" class="text-base font-bold truncate">Note Details</h3>
-                <button onclick="closeModals()" class="text-indigo-200 hover:text-white font-bold text-lg">✕</button>
-            </div>
-            <div id="detail-modal-body" class="p-4 space-y-3 overflow-y-auto flex-1 text-sm">
-                <!-- Injected full content -->
-            </div>
-        </div>
-
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -328,7 +311,6 @@
 
         window.onload = async function() {
             await loadGrades();
-            checkForUnsyncedLocalData();
             switchMode('student');
         };
 
@@ -374,95 +356,35 @@
         }
 
         async function loadGrades() {
-            let remoteGrades = [];
             if (isSupabaseConnected && supabaseClient) {
                 try {
                     const { data, error } = await supabaseClient.from('grades').select('*');
-                    if (!error && data) remoteGrades = data;
+                    if (!error && data) {
+                        grades = data;
+                        renderDashboardGrades();
+                        return;
+                    }
                 } catch (e) {}
             }
             const savedGrades = localStorage.getItem('math_grades_v3');
-            const localGrades = savedGrades ? JSON.parse(savedGrades) : [];
-            
-            // Merge remote and local
-            const mergedMap = new Map();
-            localGrades.forEach(g => mergedMap.set(g.id, g));
-            remoteGrades.forEach(g => mergedMap.set(g.id, g));
-            grades = Array.from(mergedMap.values());
-            
-            // Save unified back to local storage
-            localStorage.setItem('math_grades_v3', JSON.stringify(grades));
+            grades = savedGrades ? JSON.parse(savedGrades) : [];
             renderDashboardGrades();
         }
 
         async function loadContentsForGrade(gradeId) {
-            let remoteContents = [];
             if (isSupabaseConnected && supabaseClient) {
                 try {
                     const { data, error } = await supabaseClient.from('contents').select('*').eq('grade_id', gradeId);
-                    if (!error && data) remoteContents = data;
+                    if (!error && data) {
+                        contents = data;
+                        renderContents();
+                        return;
+                    }
                 } catch (e) {}
             }
             const savedContents = localStorage.getItem('math_contents_v3_' + gradeId);
-            const localContents = savedContents ? JSON.parse(savedContents) : [];
-
-            // Merge remote and local
-            const mergedMap = new Map();
-            localContents.forEach(c => mergedMap.set(c.id, c));
-            remoteContents.forEach(c => mergedMap.set(c.id, c));
-            contents = Array.from(mergedMap.values());
-
-            localStorage.setItem('math_contents_v3_' + gradeId, JSON.stringify(contents));
+            contents = savedContents ? JSON.parse(savedContents) : [];
             renderContents();
-        }
-
-        // Checks if local storage has items not yet on Supabase or if there was a recovery event
-        function checkForUnsyncedLocalData() {
-            if (!isSupabaseConnected || !supabaseClient) return;
-            // Show backup sync option indicator if localStorage has robust content
-            const savedGrades = localStorage.getItem('math_grades_v3');
-            if (savedGrades && JSON.parse(savedGrades).length > 0) {
-                document.getElementById('sync-backup-btn').classList.remove('hidden');
-            }
-        }
-
-        async function syncLocalToSupabaseBackup() {
-            if (!isSupabaseConnected || !supabaseClient) {
-                alert("Supabase is not connected.");
-                return;
-            }
-
-            const btn = document.getElementById('sync-backup-btn');
-            btn.textContent = "⏳ Backing up to Online...";
-            
-            try {
-                // 1. Upsert all local grades
-                const savedGrades = localStorage.getItem('math_grades_v3');
-                if (savedGrades) {
-                    const localGrades = JSON.parse(savedGrades);
-                    for (const g of localGrades) {
-                        await supabaseClient.from('grades').upsert(g, { onConflict: 'id' });
-                    }
-                }
-
-                // 2. Upsert all local contents stored under different grade keys
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key && key.startsWith('math_contents_v3_')) {
-                        const localContents = JSON.parse(localStorage.getItem(key) || '[]');
-                        for (const c of localContents) {
-                            await supabaseClient.from('contents').upsert(c, { onConflict: 'id' });
-                        }
-                    }
-                }
-
-                btn.textContent = "✅ Backup Restored Online!";
-                setTimeout(() => btn.classList.add('hidden'), 3000);
-                alert("All local data has been successfully backed up and synced to Supabase online!");
-            } catch (err) {
-                btn.textContent = "⚠️ Restore Failed, Retry";
-                alert("Backup sync failed. Please check your network connection or RLS table configuration.");
-            }
         }
 
         function renderDashboardGrades() {
@@ -543,88 +465,44 @@
                         if (item.type === 'reminder') { icon = '⏰'; badgeColor = 'bg-rose-100 text-rose-700'; }
                         if (item.type === 'link') { icon = '🔗'; badgeColor = 'bg-blue-100 text-blue-700'; }
 
-                        let snippet = '';
-                        if (item.type === 'note') snippet = item.body || (item.fileData ? '📄 Attached Document' : 'Tap to read full notes...');
-                        if (item.type === 'reminder') snippet = 'Due: ' + (item.dueDate ? new Date(item.dueDate).toLocaleString() : 'N/A');
-                        if (item.type === 'link') snippet = item.description || item.url;
-
                         return `
-                            <div class="bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm p-3 flex flex-col justify-between hover:border-indigo-300 transition-colors">
+                            <div class="bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm p-3 flex flex-col justify-between">
                                 <div>
-                                    <div class="flex justify-between items-start gap-1 mb-1">
+                                    <div class="flex justify-between items-start gap-1 mb-1.5">
                                         <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${badgeColor}">${icon} ${item.type}</span>${currentMode === 'teacher' ? `
-                                            <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
+                                            <div class="flex items-center gap-1.5">
                                                 <button onclick="editContent('${item.id}')" class="text-slate-400 hover:text-indigo-600 text-[11px]">✏️</button>
                                                 <button onclick="deleteContent('${item.id}')" class="text-slate-300 hover:text-red-500 text-[11px]">🗑️</button>
                                             </div>
                                         ` : ''}
                                     </div>
-                                    <div onclick="openDetailView('${item.id}')" class="cursor-pointer">
-                                        <h3 class="font-bold text-slate-800 text-xs sm:text-sm mb-0.5">${escapeHtml(item.title)}</h3>
-                                        <p class="text-slate-500 text-[11px] truncate">${escapeHtml(snippet)}</p>
-                                    </div>
-                                </div>
-                                <div class="mt-2 pt-1.5 border-t border-slate-100 flex justify-end">
-                                    <button onclick="openDetailView('${item.id}')" class="text-[11px] font-semibold text-indigo-600 hover:underline">Tap to view full notes & files →</button>
+                                    <h3 class="font-bold text-slate-800 text-xs sm:text-sm mb-1">${escapeHtml(item.title)}</h3>${item.type === 'note' ? `
+                                        <div class="space-y-1.5">
+                                            ${item.body ? `<p class="text-slate-600 text-xs whitespace-pre-line bg-slate-50 p-2 rounded-lg">${escapeHtml(item.body)}</p>` : ''}
+                                            ${item.fileData ? `<div class="mt-1 text-center"><a href="${item.fileData}" download="file" class="text-[10px] bg-indigo-600 text-white px-2 py-1 rounded font-medium inline-block">📥 Download File</a></div>` : ''}
+                                            ${item.customHtml ? `<div class="p-1.5 bg-slate-50 rounded text-[11px] overflow-x-auto">${item.customHtml}</div>` : ''}
+                                        </div>
+                                    ` : ''}
+
+                                    ${item.type === 'reminder' ? `
+                                        <div class="bg-rose-50 p-2 rounded-lg space-y-0.5">
+                                            <p class="text-[10px] font-bold text-rose-700">Due: ${item.dueDate ? new Date(item.dueDate).toLocaleString() : 'N/A'}</p>
+                                            <p class="text-slate-700 text-xs">${escapeHtml(item.body || '')}</p>
+                                        </div>
+                                    ` : ''}
+
+                                    ${item.type === 'link' ? `
+                                        <div class="space-y-1">
+                                            <p class="text-slate-600 text-xs">${escapeHtml(item.description || '')}</p>
+                                            <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline text-xs font-medium block">🌐 Open Link ↗</a>
+                                        </div>
+                                    ` : ''}
                                 </div>
                             </div>
                         `;
                     }).join('')}
                 </div>
             `;
-        }
-
-        function openDetailView(id) {
-            const item = contents.find(c => c.id === id);
-            if (!item) return;
-
-            document.getElementById('detail-modal-title').textContent = item.title;
-            const bodyEl = document.getElementById('detail-modal-body');
-
-            let contentHtml = '';
-            if (item.type === 'note') {
-                contentHtml = `
-                    <div class="space-y-3">
-                        ${item.body ? `<div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-slate-700 whitespace-pre-line text-sm leading-relaxed">${escapeHtml(item.body)}</div>` : ''}
-                        
-                        ${item.fileData ? `
-                            <div class="p-3 bg-indigo-50 border border-indigo-100 rounded-xl space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-indigo-900">📄 Attached Learning File</span>
-                                    <a href="${item.fileData}" download="${escapeHtml(item.fileName || 'document')}" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-medium inline-flex items-center gap-1 shadow-sm">📥 Download File</a>
-                                </div>
-                                ${item.fileType && item.fileType.includes('image') ? `<img src="${item.fileData}" class="max-h-64 rounded-lg mx-auto">` : ''}
-                                ${item.fileType && item.fileType.includes('pdf') ? `<iframe src="${item.fileData}" class="w-full h-80 rounded border border-indigo-200 bg-white"></iframe>` : ''}
-                            </div>
-                        ` : ''}
-
-                        ${item.customHtml ? `
-                            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl overflow-x-auto">
-                                ${item.customHtml}
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            } else if (item.type === 'reminder') {
-                contentHtml = `
-                    <div class="bg-rose-50 border border-rose-100 p-4 rounded-xl space-y-2">
-                        <p class="text-xs font-bold text-rose-700">📅 Due Date: ${item.dueDate ? new Date(item.dueDate).toLocaleString() : 'N/A'}</p>
-                        <p class="text-slate-700 text-sm whitespace-pre-line">${escapeHtml(item.body || '')}</p>
-                    </div>
-                `;
-            } else if (item.type === 'link') {
-                contentHtml = `
-                    <div class="space-y-3">
-                        ${item.photo ? `<img src="${item.photo}" class="w-full h-40 object-cover rounded-xl border border-slate-100">` : ''}
-                        <p class="text-slate-600 text-sm">${escapeHtml(item.description || '')}</p>
-                        <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium text-xs inline-flex items-center gap-1.5 shadow-sm">🌐 Open External Website ↗</a>
-                    </div>
-                `;
-            }
-
-            bodyEl.innerHTML = contentHtml;
-            document.getElementById('modal-container').classList.remove('hidden');
-            document.getElementById('modal-view-detail').classList.remove('hidden');
         }
 
         function openAddGradeModal() {
@@ -655,13 +533,10 @@
             const photoB64 = document.getElementById('edit-teacher-photo-base64').value;
             if (photoB64) grade.teacherPhoto = photoB64;
 
-            // Save local first
-            localStorage.setItem('math_grades_v3', JSON.stringify(grades));
-
-            // Sync upsert online via Supabase
             if (isSupabaseConnected && supabaseClient) {
-                try { await supabaseClient.from('grades').upsert(grade, { onConflict: 'id' }); } catch (e) {}
+                try { await supabaseClient.from('grades').update(grade).eq('id', activeGradeId); } catch (e) {}
             }
+            localStorage.setItem('math_grades_v3', JSON.stringify(grades));
             closeModals();
             selectGrade(activeGradeId);
         }
@@ -678,7 +553,7 @@
             document.getElementById('field-container-link').classList.add('hidden');
 
             const titleEl = document.getElementById('content-modal-title');
-            if (type === 'note') { titleEl.textContent = "Add Note & File"; document.getElementById('field-container-note').classList.remove('hidden'); }
+            if (type === 'note') { titleEl.textContent = "Add Note"; document.getElementById('field-container-note').classList.remove('hidden'); }
             else if (type === 'reminder') { titleEl.textContent = "Add Reminder"; document.getElementById('field-container-reminder').classList.remove('hidden'); }
             else if (type === 'link') { titleEl.textContent = "Add Link"; document.getElementById('field-container-link').classList.remove('hidden'); }
             
@@ -686,7 +561,6 @@
             document.getElementById('input-content-body').value = '';
             document.getElementById('input-material-file-data').value = '';
             document.getElementById('input-material-file-type').value = '';
-            document.getElementById('input-material-file-name').value = '';
             document.getElementById('input-custom-html').value = '';
             document.getElementById('input-reminder-date').value = '';
             document.getElementById('input-reminder-body').value = '';
@@ -705,8 +579,6 @@
             if (item.type === 'note') {
                 document.getElementById('input-content-body').value = item.body || '';
                 document.getElementById('input-material-file-data').value = item.fileData || '';
-                document.getElementById('input-material-file-type').value = item.fileType || '';
-                document.getElementById('input-material-file-name').value = item.fileName || '';
                 document.getElementById('input-custom-html').value = item.customHtml || '';
             } else if (item.type === 'reminder') {
                 document.getElementById('input-reminder-date').value = item.dueDate || '';
@@ -723,7 +595,6 @@
             document.getElementById('modal-add-grade').classList.add('hidden');
             document.getElementById('modal-edit-grade-profile').classList.add('hidden');
             document.getElementById('modal-add-content').classList.add('hidden');
-            document.getElementById('modal-view-detail').classList.add('hidden');
         }
 
         async function saveNewGrade() {
@@ -743,14 +614,11 @@
                 teacherPhoto: teacherPhoto || 'https://placehold.co/150/4f46e5/ffffff?text=TC'
             };
 
+            if (isSupabaseConnected && supabaseClient) {
+                try { await supabaseClient.from('grades').insert([newGrade]); } catch (e) {}
+            }
             grades.push(newGrade);
             localStorage.setItem('math_grades_v3', JSON.stringify(grades));
-
-            // Sync upsert online via Supabase
-            if (isSupabaseConnected && supabaseClient) {
-                try { await supabaseClient.from('grades').upsert(newGrade, { onConflict: 'id' }); } catch (e) {}
-            }
-
             closeModals();
             selectGrade(newGrade.id);
         }
@@ -779,8 +647,6 @@
                 title: title,
                 body: currentContentType === 'note' ? document.getElementById('input-content-body').value : (currentContentType === 'reminder' ? document.getElementById('input-reminder-body').value : ''),
                 fileData: currentContentType === 'note' ? document.getElementById('input-material-file-data').value || (existingItem ? existingItem.fileData : '') : '',
-                fileType: currentContentType === 'note' ? document.getElementById('input-material-file-type').value || (existingItem ? existingItem.fileType : '') : '',
-                fileName: currentContentType === 'note' ? document.getElementById('input-material-file-name').value || (existingItem ? existingItem.fileName : '') : '',
                 customHtml: currentContentType === 'note' ? document.getElementById('input-custom-html').value : '',
                 dueDate: currentContentType === 'reminder' ? document.getElementById('input-reminder-date').value : '',
                 url: currentContentType === 'link' ? document.getElementById('input-content-url').value : '',
@@ -788,19 +654,17 @@
                 photo: existingItem ? existingItem.photo : ''
             };
 
-            // Save local first
+            if (isSupabaseConnected && supabaseClient) {
+                try {
+                    if (editId) await supabaseClient.from('contents').update(updatedItem).eq('id', editId);
+                    else await supabaseClient.from('contents').insert([updatedItem]);
+                } catch (e) {}
+            }
+
             if (editId) contents = contents.map(c => c.id === editId ? updatedItem : c);
             else contents.push(updatedItem);
 
             localStorage.setItem('math_contents_v3_' + activeGradeId, JSON.stringify(contents));
-
-            // Sync upsert online via Supabase (ensures fallback or update works cleanly)
-            if (isSupabaseConnected && supabaseClient) {
-                try {
-                    await supabaseClient.from('contents').upsert(updatedItem, { onConflict: 'id' });
-                } catch (e) {}
-            }
-
             closeModals();
             renderContents();
         }
@@ -842,7 +706,6 @@
         function handleMaterialFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            document.getElementById('input-material-file-name').value = file.name;
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('input-material-file-data').value = e.target.result;
